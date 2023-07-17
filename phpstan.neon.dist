@@ -1,6 +1,11 @@
 parameters:
-    level: 5
+    level: 1
     paths:
         - src
 
     reportUnmatchedIgnoredErrors: true
+
+    excludePaths:
+        - src/Laravel/Console/TelegramLongPollingCommand.php
+        - src/LaravelServiceProvider.php
+

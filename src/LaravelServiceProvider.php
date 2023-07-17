@@ -14,7 +14,6 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\IncomingMessagesFactory;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramUnknownIncomingRegularMessage;
 
-
 class LaravelServiceProvider extends ServiceProvider
 {
     public function register()

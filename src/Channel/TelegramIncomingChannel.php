@@ -7,7 +7,7 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
-use SequentSoft\ThreadFlowTelegram\Contracts\DataFetchers\DataFetcherInterface;
+use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 
 class TelegramIncomingChannel implements IncomingChannelInterface
@@ -15,7 +15,8 @@ class TelegramIncomingChannel implements IncomingChannelInterface
     public function __construct(
         protected IncomingMessagesFactoryInterface $messagesFactory,
         protected SimpleConfigInterface $config,
-    ) {}
+    ) {
+    }
 
     public function listen(DataFetcherInterface $fetcher, Closure $callback): void
     {
@@ -42,10 +43,5 @@ class TelegramIncomingChannel implements IncomingChannelInterface
     public function preprocess(IncomingMessageInterface $message, SessionInterface $session): IncomingMessageInterface
     {
         return $this->replaceTextUsingKeyboardMapping($message, $session);
-    }
-
-    public function config(): SimpleConfigInterface
-    {
-        return $this->config;
     }
 }

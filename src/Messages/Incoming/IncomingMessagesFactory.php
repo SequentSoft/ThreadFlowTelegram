@@ -47,7 +47,8 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
         }
 
         throw new InvalidArgumentException(
-            sprintf('Message class for data %s not found',
+            sprintf(
+                'Message class for data %s not found',
                 json_encode($data, JSON_THROW_ON_ERROR)
             )
         );

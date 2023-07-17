@@ -5,7 +5,7 @@ namespace SequentSoft\ThreadFlowTelegram\DataFetchers;
 use Closure;
 use Exception;
 use GuzzleHttp\Client;
-use SequentSoft\ThreadFlowTelegram\Contracts\DataFetchers\DataFetcherInterface;
+use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 
 class LongPollingDataFetcher implements DataFetcherInterface
 {
@@ -20,7 +20,8 @@ class LongPollingDataFetcher implements DataFetcherInterface
         protected int $timeout = 30,
         protected int $maxAttempts = 3,
         protected int $attemptDelay = 1,
-    ) {}
+    ) {
+    }
 
     protected function getClient(string $token): Client
     {

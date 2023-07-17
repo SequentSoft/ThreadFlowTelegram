@@ -7,7 +7,8 @@ use SequentSoft\ThreadFlow\Messages\Incoming\Regular\TextIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 
-class TelegramUnknownIncomingRegularMessage  extends TextIncomingRegularMessage implements CanCreateFromDataMessageInterface
+class TelegramUnknownIncomingRegularMessage extends TextIncomingRegularMessage implements
+    CanCreateFromDataMessageInterface
 {
     use CreatesMessageContextFromDataTrait;
 

@@ -13,11 +13,7 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
 {
     public function __construct(
         protected SimpleConfigInterface $config,
-    ) {}
-
-    public function config(): SimpleConfigInterface
-    {
-        return $this->config;
+    ) {
     }
 
     protected function getApiToken(): string

@@ -31,6 +31,90 @@ class TelegramLongPollingCommand extends Command
     }
 
     /**
+     * Handles the console command.
+     */
+    public function handle()
+    {
+        $channelName = $this->option('channel');
+
+        $config = $this->bot->getChannelConfig($channelName);
+
+        $token = $config->get('api_token');
+        $dispatcherName = $config->get('dispatcher');
+
+        $outgoingChannel = $this->outgoingChannelRegistry->get($channelName, $config);
+        $incomingChannel = $this->incomingChannelRegistry->get($channelName, $config);
+        $dispatcher = $this->dispatcherFactory->make($dispatcherName);
+
+        $dataFetcher = new LongPollingDataFetcher($token);
+
+        $this->output->title('ThreadFlow Telegram Long Polling');
+
+        $this->line(
+            'Channel name: <comment>' . $channelName . '</comment>'
+        );
+
+        $this->line(
+            'Data fetch timeout: <comment>' . $dataFetcher->getTimeout() . ' sec</comment>'
+        );
+
+        $this->line(
+            'Dispatcher: <comment>' . $dispatcherName . '</comment>'
+        );
+
+        $dataFetcher->beforeFetch($this->handleBeforeFetch(...));
+        $dataFetcher->afterFetch($this->handleAfterFetch(...));
+        $dataFetcher->onFetchError($this->handleFetchError(...));
+
+        $incomingChannel->listen(
+            $dataFetcher,
+            function (IncomingMessageInterface $message) use (
+                $channelName,
+                $dispatcher,
+                $outgoingChannel,
+                $incomingChannel
+            ) {
+                $this->outputLogLine(
+                    '<info>→ In</info>: '
+                    . '<comment>' . get_class($message) . '</comment>'
+                );
+
+                $dispatcher->dispatch(
+                    $channelName,
+                    $message,
+                    fn(IncomingMessageInterface $message, SessionInterface $session) => $this->processIncoming(
+                        $incomingChannel,
+                        $message,
+                        $session
+                    ),
+                    fn(OutgoingMessageInterface $message, SessionInterface $session) => $this->processOutgoing(
+                        $outgoingChannel,
+                        $message,
+                        $session
+                    ),
+                );
+            }
+        );
+    }
+
+    /**
+     * The callback function to be executed before fetching data.
+     *
+     * @param int $attempt The current attempt number
+     */
+    protected function handleBeforeFetch(int $attempt): void
+    {
+        $this->line("");
+
+        if ($attempt === 0) {
+            $this->outputLogLine('Fetching updates...', '*');
+            return;
+        }
+
+        $this->outputLogLine("[{$attempt} attempt] Fetching updates... ", '*');
+    }
+
+    /**
      * Outputs the given message and additional information to the console.
      *
      * @param string $message The message to output
@@ -51,23 +135,6 @@ class TelegramLongPollingCommand extends Command
                 $additionalMessage ? "({$additionalMessage})" : ''
             ])
         );
-    }
-
-    /**
-     * The callback function to be executed before fetching data.
-     *
-     * @param int $attempt The current attempt number
-     */
-    protected function handleBeforeFetch(int $attempt): void
-    {
-        $this->line("");
-
-        if ($attempt === 0) {
-            $this->outputLogLine('Fetching updates...', '*');
-            return;
-        }
-
-        $this->outputLogLine("[{$attempt} attempt] Fetching updates... ", '*');
     }
 
     /**
@@ -144,55 +211,5 @@ class TelegramLongPollingCommand extends Command
         );
 
         return $channel->send($message, $session);
-    }
-
-    /**
-     * Handles the console command.
-     */
-    public function handle()
-    {
-        $channelName = $this->option('channel');
-
-        $config = $this->bot->getChannelConfig($channelName);
-        $outgoingChannel = $this->bot->getOutgoingChannel($channelName);
-        $incomingChannel = $this->bot->getIncomingChannel($channelName);
-        $dispatcher = $this->bot->getDispatcher($channelName);
-
-        $token = $config->get('api_token');
-        $dispatcherName = $config->get('dispatcher');
-
-        $dataFetcher = new LongPollingDataFetcher($token);
-
-        $this->output->title('ThreadFlow Telegram Long Polling');
-
-        $this->line(
-            'Channel name: <comment>' . $channelName . '</comment>'
-        );
-
-        $this->line(
-            'Data fetch timeout: <comment>' . $dataFetcher->getTimeout() . ' sec</comment>'
-        );
-
-        $this->line(
-            'Dispatcher: <comment>' . $dispatcherName . '</comment>'
-        );
-
-        $dataFetcher->beforeFetch($this->handleBeforeFetch(...));
-        $dataFetcher->afterFetch($this->handleAfterFetch(...));
-        $dataFetcher->onFetchError($this->handleFetchError(...));
-
-        $incomingChannel->listen($dataFetcher, function (IncomingMessageInterface $message) use ($channelName, $dispatcher, $outgoingChannel, $incomingChannel) {
-            $this->outputLogLine(
-                '<info>→ In</info>: '
-                . '<comment>' . get_class($message) . '</comment>'
-            );
-
-            $dispatcher->dispatch(
-                $channelName,
-                $message,
-                fn (IncomingMessageInterface $message, SessionInterface $session) => $this->processIncoming($incomingChannel, $message, $session),
-                fn (OutgoingMessageInterface $message, SessionInterface $session) => $this->processOutgoing($outgoingChannel, $message, $session),
-            );
-        });
     }
 }

@@ -2,7 +2,6 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits;
 
-
 use SequentSoft\ThreadFlow\Chat\Room;
 
 trait CreatesRoomFromDataTrait
