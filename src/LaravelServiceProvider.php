@@ -11,6 +11,10 @@ use SequentSoft\ThreadFlowTelegram\Channel\TelegramOutgoingChannel;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramLongPollingCommand;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\IncomingMessagesFactory;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramContactIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramFileIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramImageIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramLocationIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramUnknownIncomingRegularMessage;
 
@@ -25,6 +29,10 @@ class LaravelServiceProvider extends ServiceProvider
     {
         return [
             'text' => TelegramTextIncomingRegularMessage::class,
+            'contact' => TelegramContactIncomingRegularMessage::class,
+            'location' => TelegramLocationIncomingRegularMessage::class,
+            'image' => TelegramImageIncomingRegularMessage::class,
+            'file' => TelegramFileIncomingRegularMessage::class,
         ];
     }
 

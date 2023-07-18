@@ -5,6 +5,7 @@ namespace SequentSoft\ThreadFlowTelegram\Channel;
 use GuzzleHttp\Client;
 use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
+use SequentSoft\ThreadFlow\Contracts\Keyboard\ButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingRegularMessage;
@@ -14,6 +15,11 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
     public function __construct(
         protected SimpleConfigInterface $config,
     ) {
+    }
+
+    public function getConfig(): SimpleConfigInterface
+    {
+        return $this->config;
     }
 
     protected function getApiToken(): string
@@ -37,6 +43,16 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         ]);
     }
 
+    protected function makeKeyboardButton(ButtonInterface $button): array
+    {
+        return array_filter([
+            'text' => $button->getText(),
+            'callback_data' => $button->getCallbackData() ?? '',
+            'request_contact' => $button->isRequestContact(),
+            'request_location' => $button->isRequestLocation(),
+        ]);
+    }
+
     /**
      * Generate telegram api keyboard payload
      */
@@ -53,10 +69,7 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
 
         foreach ($keyboard->getRows() as $row) {
             $result[] = array_map(function ($button) {
-                return [
-                    'text' => $button->getText(),
-                    'callback_data' => $button->getCallbackData() ?? '',
-                ];
+                return $this->makeKeyboardButton($button);
             }, $row->getButtons());
         }
 

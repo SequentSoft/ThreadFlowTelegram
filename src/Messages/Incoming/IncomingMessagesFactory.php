@@ -3,6 +3,7 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming;
 
 use InvalidArgumentException;
+use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
@@ -34,16 +35,16 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
         }
     }
 
-    public function make(array $data): IncomingMessageInterface
+    public function make(IncomingChannelInterface $channel, array $data): IncomingMessageInterface
     {
         foreach ($this->messages as $messageClass) {
             if ($messageClass::canCreateFromData($data)) {
-                return $messageClass::createFromData($data);
+                return $messageClass::createFromData($channel, $data);
             }
         }
 
         if ($this->fallbackMessageClass) {
-            return $this->fallbackMessageClass::createFromData($data);
+            return $this->fallbackMessageClass::createFromData($channel, $data);
         }
 
         throw new InvalidArgumentException(

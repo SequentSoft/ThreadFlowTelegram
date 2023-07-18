@@ -18,10 +18,15 @@ class TelegramIncomingChannel implements IncomingChannelInterface
     ) {
     }
 
+    public function getConfig(): SimpleConfigInterface
+    {
+        return $this->config;
+    }
+
     public function listen(DataFetcherInterface $fetcher, Closure $callback): void
     {
         $fetcher->fetch(fn (array $update) => $callback(
-            $this->messagesFactory->make($update)
+            $this->messagesFactory->make($this, $update)
         ));
     }
 
