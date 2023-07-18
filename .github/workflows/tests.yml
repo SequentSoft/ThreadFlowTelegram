@@ -33,7 +33,7 @@ jobs:
         coverage: none
 
     - name: Install Composer dependencies
-      run: composer update --${{ matrix.dependency-version }} --no-interaction --prefer-dist
+      run: COMPOSER_ROOT_VERSION=0.0.2 composer update --${{ matrix.dependency-version }} --no-interaction --prefer-dist
 
     - name: Integration Tests
       run: php ./vendor/bin/pest
