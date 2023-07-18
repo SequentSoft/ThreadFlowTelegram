@@ -4,10 +4,7 @@ namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
 use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ContactIncomingRegularMessage;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FIleIncomingRegularMessage;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ImageIncomingRegularMessage;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\LocationIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
