@@ -17,7 +17,7 @@ use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
 
 class TelegramLongPollingCommand extends Command
 {
-    protected $signature = 'thread-flow:telegram:long-polling {--channel=telegram}';
+    protected $signature = 'thread-flow:telegram:long-polling {channel=telegram}';
 
     protected $description = 'Starts long polling for Telegram bot';
 
@@ -35,7 +35,7 @@ class TelegramLongPollingCommand extends Command
      */
     public function handle()
     {
-        $channelName = $this->option('channel');
+        $channelName = $this->argument('channel');
 
         $config = $this->bot->getChannelConfig($channelName);
 
