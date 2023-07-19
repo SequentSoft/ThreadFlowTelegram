@@ -3,6 +3,8 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits;
 
 use SequentSoft\ThreadFlow\Chat\MessageContext;
+use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 
 trait CreatesMessageContextFromDataTrait
 {
@@ -10,12 +12,20 @@ trait CreatesMessageContextFromDataTrait
     use CreatesRoomFromDataTrait;
     use CreatesForwardParticipantFromDataTrait;
 
-    public static function createMessageContextFromData(array $data): MessageContext
-    {
+    public static function createMessageContextFromData(
+        array $data,
+        IncomingChannelInterface $channel,
+        IncomingMessagesFactoryInterface $factory
+    ): MessageContext {
         return new MessageContext(
             static::createParticipantFromData($data),
             static::createRoomFromData($data),
             static::createForwardParticipantFromData($data),
+            isset($data['message']['reply_to_message']['message_id'])
+                ? $factory->make($channel, [
+                    'message' => $data['message']['reply_to_message'],
+                ])
+                : null,
         );
     }
 }

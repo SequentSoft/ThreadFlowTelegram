@@ -7,6 +7,7 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\StickerIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
@@ -26,11 +27,14 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
         return isset($data['message']['sticker']);
     }
 
-    public static function createFromData(IncomingChannelInterface $channel, array $data): self
-    {
+    public static function createFromData(
+        IncomingChannelInterface $channel,
+        IncomingMessagesFactoryInterface $factory,
+        array $data
+    ): self {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data),
+            context: static::createMessageContextFromData($data, $channel, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: $data['message']['sticker']['emoji'] ?? null,

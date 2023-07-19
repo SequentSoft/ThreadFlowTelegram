@@ -6,4 +6,4 @@
 composer require sequentsoft/threadflow-telegram
 ```
 
-Installed by default in [ThreadFlow](https://github.com/SequentSoft/ThreadFlow).
+Telegram driver for [ThreadFlow](https://github.com/SequentSoft/ThreadFlow).

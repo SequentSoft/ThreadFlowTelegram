@@ -8,5 +8,9 @@ interface CanCreateFromDataMessageInterface
 {
     public static function canCreateFromData(array $data): bool;
 
-    public static function createFromData(IncomingChannelInterface $channel, array $data): self;
+    public static function createFromData(
+        IncomingChannelInterface $channel,
+        IncomingMessagesFactoryInterface $factory,
+        array $data
+    ): self;
 }

@@ -7,6 +7,7 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\AudioIncomingRegularMessage;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
@@ -28,11 +29,14 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         return isset($data['message']['voice']);
     }
 
-    public static function createFromData(IncomingChannelInterface $channel, array $data): self
-    {
+    public static function createFromData(
+        IncomingChannelInterface $channel,
+        IncomingMessagesFactoryInterface $factory,
+        array $data
+    ): self {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data),
+            context: static::createMessageContextFromData($data, $channel, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: null,

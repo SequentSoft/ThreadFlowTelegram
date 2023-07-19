@@ -21,7 +21,7 @@
         "guzzlehttp/guzzle": "^7.3"
     },
     "require-dev": {
-        "sequentsoft/threadflow": "^0.0.6",
+        "sequentsoft/threadflow": "^0.0.7",
         "mockery/mockery": "^1.6",
         "pestphp/pest": "^2.8.0",
         "phpstan/phpstan": "^1.10",

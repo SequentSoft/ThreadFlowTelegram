@@ -39,12 +39,12 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
     {
         foreach ($this->messages as $messageClass) {
             if ($messageClass::canCreateFromData($data)) {
-                return $messageClass::createFromData($channel, $data);
+                return $messageClass::createFromData($channel, $this, $data);
             }
         }
 
         if ($this->fallbackMessageClass) {
-            return $this->fallbackMessageClass::createFromData($channel, $data);
+            return $this->fallbackMessageClass::createFromData($channel, $this, $data);
         }
 
         throw new InvalidArgumentException(
