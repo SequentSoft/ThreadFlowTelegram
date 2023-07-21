@@ -8,4 +8,7 @@ parameters:
     excludePaths:
         - src/Laravel/Console/TelegramLongPollingCommand.php
         - src/LaravelServiceProvider.php
-
+        - src/Laravel/Console/TelegramDeleteWebhookCommand.php
+        - src/Laravel/Console/TelegramGetWebhookInfoCommand.php
+        - src/Laravel/Console/TelegramSetWebhookCommand.php
+        - src/Laravel/Controllers/WebhookHandleController.php

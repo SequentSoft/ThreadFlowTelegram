@@ -9,6 +9,10 @@ use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramOutgoingChannel;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramDeleteWebhookCommand;
+use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramGetWebhookInfoCommand;
+use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramSetWebhookCommand;
+use SequentSoft\ThreadFlowTelegram\Laravel\Controllers\WebhookHandleController;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramLongPollingCommand;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\IncomingMessagesFactory;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramAudioIncomingRegularMessage;
@@ -40,6 +44,22 @@ class LaravelServiceProvider extends ServiceProvider
             'video' => TelegramVideoIncomingRegularMessage::class,
             'audio' => TelegramAudioIncomingRegularMessage::class,
         ];
+    }
+
+    protected function bootWebhookRoutes()
+    {
+        foreach ($this->app->get('config')->get('thread-flow.channels', []) as $channelData) {
+            $driver = $channelData['driver'] ?? null;
+            $webhookUrl = $channelData['webhook_url'] ?? null;
+            $apiToken = $channelData['api_token'] ?? null;
+
+            if ($driver === 'telegram' && $webhookUrl && $apiToken) {
+                $this->app->get('router')->post(
+                    $webhookUrl,
+                    [WebhookHandleController::class, 'handle']
+                );
+            }
+        }
     }
 
     public function boot()
@@ -87,7 +107,12 @@ class LaravelServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 TelegramLongPollingCommand::class,
+                TelegramSetWebhookCommand::class,
+                TelegramGetWebhookInfoCommand::class,
+                TelegramDeleteWebhookCommand::class,
             ]);
         }
+
+        $this->bootWebhookRoutes();
     }
 }

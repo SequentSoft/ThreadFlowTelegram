@@ -4,16 +4,10 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
 use Exception;
 use Illuminate\Console\Command;
-use SequentSoft\ThreadFlow\Contracts\BotInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelRegistryInterface;
-use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
+use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramLongPollingCommand extends Command
 {
@@ -22,10 +16,7 @@ class TelegramLongPollingCommand extends Command
     protected $description = 'Starts long polling for Telegram bot';
 
     public function __construct(
-        protected IncomingChannelRegistryInterface $incomingChannelRegistry,
-        protected OutgoingChannelRegistryInterface $outgoingChannelRegistry,
-        protected DispatcherFactoryInterface $dispatcherFactory,
-        protected BotInterface $bot,
+        protected ThreadFlowTelegram $threadFlowTelegram,
     ) {
         parent::__construct();
     }
@@ -37,14 +28,11 @@ class TelegramLongPollingCommand extends Command
     {
         $channelName = $this->argument('channel');
 
-        $config = $this->bot->getChannelConfig($channelName);
+        $config = $this->threadFlowTelegram->getTelegramChannelConfig($channelName);
 
         $token = $config->get('api_token');
-        $dispatcherName = $config->get('dispatcher');
 
-        $outgoingChannel = $this->outgoingChannelRegistry->get($channelName, $config);
-        $incomingChannel = $this->incomingChannelRegistry->get($channelName, $config);
-        $dispatcher = $this->dispatcherFactory->make($dispatcherName);
+        $dispatcherName = $config->get('dispatcher');
 
         $dataFetcher = new LongPollingDataFetcher($token);
 
@@ -66,34 +54,15 @@ class TelegramLongPollingCommand extends Command
         $dataFetcher->afterFetch($this->handleAfterFetch(...));
         $dataFetcher->onFetchError($this->handleFetchError(...));
 
-        $incomingChannel->listen(
-            $dataFetcher,
-            function (IncomingMessageInterface $message) use (
-                $channelName,
-                $dispatcher,
-                $outgoingChannel,
-                $incomingChannel
-            ) {
-                $this->outputLogLine(
-                    '<info>→ In</info>: '
-                    . '<comment>' . get_class($message) . '</comment>'
-                );
-
-                $dispatcher->dispatch(
-                    $channelName,
-                    $message,
-                    fn(IncomingMessageInterface $message, SessionInterface $session) => $this->processIncoming(
-                        $incomingChannel,
-                        $message,
-                        $session
-                    ),
-                    fn(OutgoingMessageInterface $message, SessionInterface $session) => $this->processOutgoing(
-                        $outgoingChannel,
-                        $message,
-                        $session
-                    ),
-                );
-            }
+        $this->threadFlowTelegram->listen(
+            channelName: $channelName,
+            dataFetcher: $dataFetcher,
+            beforeDispatchCallback: fn(IncomingMessageInterface $message) => $this->outputLogLine(
+                '<info>→ In</info>: ' . '<comment>' . get_class($message) . '</comment>'
+            ),
+            outgoingCallback: fn (OutgoingMessageInterface $message) => $this->outputLogLine(
+                '<info>← Out</info>: ' . '<comment>' . get_class($message) . '</comment>'
+            )
         );
     }
 
@@ -190,26 +159,5 @@ class TelegramLongPollingCommand extends Command
         $this->outputLogLine(
             "<error>Error occurred</error>: {$exception->getMessage()}"
         );
-    }
-
-    protected function processIncoming(
-        IncomingChannelInterface $channel,
-        IncomingMessageInterface $message,
-        SessionInterface $session
-    ) {
-        return $channel->preprocess($message, $session);
-    }
-
-    protected function processOutgoing(
-        OutgoingChannelInterface $channel,
-        OutgoingMessageInterface $message,
-        SessionInterface $session
-    ) {
-        $this->outputLogLine(
-            '<info>← Out</info>: '
-            . '<comment>' . get_class($message) . '</comment>'
-        );
-
-        return $channel->send($message, $session);
     }
 }
