@@ -19,6 +19,7 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramAudioIncomi
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramContactIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramFileIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramImageIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramInlineButtonCallbackIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramLocationIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramStickerIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingRegularMessage;
@@ -43,6 +44,7 @@ class LaravelServiceProvider extends ServiceProvider
             'sticker' => TelegramStickerIncomingRegularMessage::class,
             'video' => TelegramVideoIncomingRegularMessage::class,
             'audio' => TelegramAudioIncomingRegularMessage::class,
+            'callback' => TelegramInlineButtonCallbackIncomingRegularMessage::class,
         ];
     }
 

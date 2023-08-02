@@ -11,9 +11,10 @@ use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\DataFetchers\InvokableDataFetcher;
-use SequentSoft\ThreadFlow\Exceptions\Channel\InvalidChannelDriverException;
+use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
 
 class ThreadFlowTelegram
 {
@@ -75,16 +76,17 @@ class ThreadFlowTelegram
                     ),
                     function (
                         OutgoingMessageInterface $message,
-                        SessionInterface $session
+                        SessionInterface $session,
+                        ?PageInterface $contextPage
                     ) use (
                         $outgoingChannel,
                         $outgoingCallback
                     ) {
                         if ($outgoingCallback) {
-                            $outgoingCallback($message, $session);
+                            $outgoingCallback($message, $session, $contextPage);
                         }
 
-                        $outgoingChannel->send($message, $session);
+                        $outgoingChannel->send($message, $session, $contextPage);
                     },
                 );
             }
@@ -96,7 +98,7 @@ class ThreadFlowTelegram
         $config = $this->bot->getChannelConfig($channelName);
 
         if ($config->get('driver') !== 'telegram') {
-            throw new InvalidChannelDriverException("Channel {$channelName} is not configured for Telegram.");
+            throw new ChannelNotConfiguredException("Channel {$channelName} is not configured for Telegram.");
         }
 
         return $config;

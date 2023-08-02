@@ -49,8 +49,15 @@ class TelegramSetWebhookCommand extends Command
             throw new Exception('Webhook URL is not configured for channel "' . $channelName . '"');
         }
 
+        $url = $this->makeUrl(
+            url($webhookUrl),
+            $channelName
+        );
+
+        $this->line('URL: ' . $url);
+
         $response = Http::post("https://api.telegram.org/bot{$token}/setWebhook", array_filter([
-            'url' => $this->makeUrl($webhookUrl, $channelName),
+            'url' => $url,
             'ip_address' => $webhookIpAddress,
             'max_connections' => $webhookMaxConnections,
             'secret_token' => $webhookSecretToken,

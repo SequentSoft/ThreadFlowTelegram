@@ -82,20 +82,20 @@ class TelegramFileIncomingRegularMessage extends FileIncomingRegularMessage impl
         IncomingMessagesFactoryInterface $factory,
         array $data
     ): self {
+        $document = $data['message']['document'];
+
         $message = new static(
             id: $data['message']['message_id'],
             context: static::createMessageContextFromData($data, $channel, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
-            name: $data['message']['document']['file_name'] ?? null,
+            name: $document['file_name'] ?? null,
         );
 
-        $lastImage = $data['message']['file'][count($data['message']['file']) - 1];
-
-        $message->setFileId($lastImage['file_id']);
-        $message->setFileUniqueId($lastImage['file_unique_id']);
-        $message->setFileSize($lastImage['file_size'] ?? null);
-        $message->setMimetype($lastImage['mime_type'] ?? null);
+        $message->setFileId($document['file_id']);
+        $message->setFileUniqueId($document['file_unique_id']);
+        $message->setFileSize($document['file_size'] ?? null);
+        $message->setMimetype($document['mime_type'] ?? null);
         $message->setBotToken($channel->getConfig()->get('api_token'));
 
         $message->setRaw($data);

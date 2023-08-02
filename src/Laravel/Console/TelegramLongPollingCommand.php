@@ -58,10 +58,11 @@ class TelegramLongPollingCommand extends Command
             channelName: $channelName,
             dataFetcher: $dataFetcher,
             beforeDispatchCallback: fn(IncomingMessageInterface $message) => $this->outputLogLine(
-                '<info>→ In</info>: ' . '<comment>' . get_class($message) . '</comment>'
+                '<info>→ In</info>' . ($message->getStateId() ? ' <fg=blue>[BG-' . $message->getStateId(
+                ) . ']</>' : '') . ': <comment>' . get_class($message) . '</comment>'
             ),
-            outgoingCallback: fn (OutgoingMessageInterface $message) => $this->outputLogLine(
-                '<info>← Out</info>: ' . '<comment>' . get_class($message) . '</comment>'
+            outgoingCallback: fn(OutgoingMessageInterface $message) => $this->outputLogLine(
+                '<info>← Out</info>: <comment>' . get_class($message) . '</comment>'
             )
         );
     }

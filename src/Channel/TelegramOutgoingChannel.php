@@ -7,7 +7,9 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\ButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
+use SequentSoft\ThreadFlow\Keyboard\InlineKeyboard;
 use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingRegularMessage;
 
 class TelegramOutgoingChannel implements OutgoingChannelInterface
@@ -22,61 +24,39 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         return $this->config;
     }
 
-    protected function getApiToken(): string
-    {
-        return $this->config->get('api_token');
-    }
+    public function send(
+        OutgoingMessageInterface $message,
+        SessionInterface $session,
+        ?PageInterface $contextPage = null
+    ): OutgoingMessageInterface {
+        $this->storeKeyboardMapToSession($message, $session);
 
-    protected function getClient(string $token): Client
-    {
-        return new Client([
-            'base_uri' => "https://api.telegram.org/bot{$token}/",
-        ]);
-    }
+        if ($message instanceof TextOutgoingRegularMessage) {
+            $text = $message->getText();
 
-    protected function sendMessageViaTelegramApi(array $payload): void
-    {
-        $client = $this->getClient($this->getApiToken());
+            if ($message->getId()) {
+                $this->editMessageTextViaTelegramApi(
+                    array_filter([
+                        'chat_id' => $message->getContext()->getRoom()->getId(),
+                        'message_id' => $message->getId(),
+                        'text' => $text,
+                        'reply_markup' => $this->keyboardToArray($message, $contextPage),
+                    ])
+                );
+            } else {
+                $result = $this->sendMessageViaTelegramApi(
+                    array_filter([
+                        'chat_id' => $message->getContext()->getRoom()->getId(),
+                        'text' => $text,
+                        'reply_markup' => $this->keyboardToArray($message, $contextPage),
+                    ])
+                );
 
-        $client->post('sendMessage', [
-            'json' => $payload,
-        ]);
-    }
-
-    protected function makeKeyboardButton(ButtonInterface $button): array
-    {
-        return array_filter([
-            'text' => $button->getText(),
-            'callback_data' => $button->getCallbackData() ?? '',
-            'request_contact' => $button->isRequestContact(),
-            'request_location' => $button->isRequestLocation(),
-        ]);
-    }
-
-    /**
-     * Generate telegram api keyboard payload
-     */
-    protected function keyboardToArray(
-        TextOutgoingRegularMessage $message
-    ): array {
-        $keyboard = $message->getKeyboard();
-
-        if ($keyboard === null) {
-            return [];
+                $message->setId($result['message_id'] ?? null);
+            }
         }
 
-        $result = [];
-
-        foreach ($keyboard->getRows() as $row) {
-            $result[] = array_map(function ($button) {
-                return $this->makeKeyboardButton($button);
-            }, $row->getButtons());
-        }
-
-        return [
-            'keyboard' => $result,
-            'resize_keyboard' => true,
-        ];
+        return $message;
     }
 
     protected function storeKeyboardMapToSession(
@@ -86,6 +66,10 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         $keyboard = $message->getKeyboard();
 
         if ($keyboard === null) {
+            return;
+        }
+
+        if ($keyboard instanceof InlineKeyboard) {
             return;
         }
 
@@ -100,23 +84,105 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         $session->set('$telegramKeyboardMap', $keyboardMap);
     }
 
-    public function send(
-        OutgoingMessageInterface $message,
-        SessionInterface $session
-    ): OutgoingMessageInterface {
-        $this->storeKeyboardMapToSession($message, $session);
+    protected function editMessageTextViaTelegramApi(array $payload): array
+    {
+        $client = $this->getClient($this->getApiToken());
 
-        if ($message instanceof TextOutgoingRegularMessage) {
-            $text = $message->getText();
-            $this->sendMessageViaTelegramApi(
-                array_filter([
-                    'chat_id' => $message->getContext()->getRoom()->getId(),
-                    'text' => $text,
-                    'reply_markup' => $this->keyboardToArray($message),
-                ])
-            );
+        $response = $client->post('editMessageText', [
+            'json' => $payload,
+        ]);
+
+        return json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['result'] ?? [];
+    }
+
+    protected function getClient(string $token): Client
+    {
+        return new Client([
+            'base_uri' => "https://api.telegram.org/bot{$token}/",
+        ]);
+    }
+
+    protected function getApiToken(): string
+    {
+        return $this->config->get('api_token');
+    }
+
+    /**
+     * Generate telegram api keyboard payload
+     */
+    protected function keyboardToArray(
+        TextOutgoingRegularMessage $message,
+        ?PageInterface $contextPage
+    ): array {
+        $keyboard = $message->getKeyboard();
+
+        if ($keyboard === null) {
+            return [];
         }
 
-        return $message;
+        $result = [];
+
+        if ($keyboard instanceof InlineKeyboard) {
+            $stateId = $contextPage?->getState()?->getId();
+
+            foreach ($keyboard->getRows() as $row) {
+                $result[] = array_map(function ($button) use ($stateId) {
+                    return $this->makeInlineKeyboardButton($button, $stateId);
+                }, $row->getButtons());
+            }
+
+            return [
+                'inline_keyboard' => $result,
+            ];
+        }
+
+        foreach ($keyboard->getRows() as $row) {
+            $result[] = array_map(function ($button) {
+                return $this->makeKeyboardButton($button);
+            }, $row->getButtons());
+        }
+
+        return [
+            'keyboard' => $result,
+            'resize_keyboard' => true,
+        ];
+    }
+
+    protected function makeInlineKeyboardButton(ButtonInterface $button, ?string $stateId): array
+    {
+        return [
+            'text' => $button->getText(),
+            'callback_data' => "{$stateId}:" . $button->getCallbackData() ?? '',
+        ];
+    }
+
+    protected function makeKeyboardButton(ButtonInterface $button): array
+    {
+        return array_filter([
+            'text' => $button->getText(),
+            'request_contact' => $button->isRequestContact(),
+            'request_location' => $button->isRequestLocation(),
+        ]);
+    }
+
+    protected function sendMessageViaTelegramApi(array $payload): array
+    {
+        $client = $this->getClient($this->getApiToken());
+
+        $response = $client->post('sendMessage', [
+            'json' => $payload,
+        ]);
+
+        return json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['result'] ?? [];
     }
 }
