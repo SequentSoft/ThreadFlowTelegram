@@ -13,7 +13,8 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContex
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface, WithApiTokenInterface
+    CanCreateFromDataMessageInterface,
+    WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;

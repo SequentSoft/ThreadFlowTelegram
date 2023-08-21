@@ -18,7 +18,9 @@ use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 
 class ThreadFlowTelegram
 {
-    public function __construct(protected BotManagerInterface $botManager) {}
+    public function __construct(protected BotManagerInterface $botManager)
+    {
+    }
 
     public function handleData(string $channelName, array $data): void
     {

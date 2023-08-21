@@ -13,7 +13,8 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContex
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface, WithApiTokenInterface
+    CanCreateFromDataMessageInterface,
+    WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;

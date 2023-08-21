@@ -12,7 +12,8 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContex
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface, WithApiTokenInterface
+    CanCreateFromDataMessageInterface,
+    WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
