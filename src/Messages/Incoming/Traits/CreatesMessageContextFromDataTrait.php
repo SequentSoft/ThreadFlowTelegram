@@ -14,7 +14,6 @@ trait CreatesMessageContextFromDataTrait
 
     public static function createMessageContextFromData(
         array $data,
-        IncomingChannelInterface $channel,
         IncomingMessagesFactoryInterface $factory
     ): MessageContext {
         return new MessageContext(
@@ -22,7 +21,7 @@ trait CreatesMessageContextFromDataTrait
             static::createRoomFromData($data),
             static::createForwardParticipantFromData($data),
             isset($data['message']['reply_to_message']['message_id'])
-                ? $factory->make($channel, [
+                ? $factory->make([
                     'message' => $data['message']['reply_to_message'],
                 ])
                 : null,

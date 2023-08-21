@@ -4,9 +4,13 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use JsonException;
+use RuntimeException;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
 use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
@@ -27,13 +31,15 @@ class TelegramSetWebhookCommand extends Command
 
         $queryParams['channel'] = $channelName;
 
-        return $urlWithoutQueryParams . '?' . http_build_query($queryParams);
+        return url($urlWithoutQueryParams . '?' . http_build_query($queryParams));
     }
 
     /**
      * Handles the console command.
+     * @throws ChannelNotConfiguredException|RequestException
+     * @throws JsonException
      */
-    public function handle(ThreadFlowTelegram $threadFlowTelegram)
+    public function handle(ThreadFlowTelegram $threadFlowTelegram): void
     {
         $this->output->title('ThreadFlow Telegram Webhook Set');
 
@@ -46,7 +52,7 @@ class TelegramSetWebhookCommand extends Command
         $webhookSecretToken = $config->get('webhook_secret_token');
 
         if (!$webhookUrl) {
-            throw new Exception('Webhook URL is not configured for channel "' . $channelName . '"');
+            throw new RuntimeException('Webhook URL is not configured for channel "' . $channelName . '"');
         }
 
         $url = $this->makeUrl(
@@ -78,7 +84,7 @@ class TelegramSetWebhookCommand extends Command
             ],
         ]))->throw()->json();
 
-        $this->line(json_encode($response, JSON_PRETTY_PRINT));
+        $this->line(json_encode($response, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 
         $this->output->success('Webhook has been set successfully');
     }

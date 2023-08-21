@@ -6,10 +6,17 @@ use GuzzleHttp\Client;
 use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\ButtonInterface;
+use SequentSoft\ThreadFlow\Contracts\Keyboard\CommonKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingRegularMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ImageOutgoingRegularMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\TextOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
+use SequentSoft\ThreadFlow\Keyboard\CommonKeyboard;
 use SequentSoft\ThreadFlow\Keyboard\InlineKeyboard;
+use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\ForwardOutgoingMessage;
+use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingMessage;
 use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingRegularMessage;
 
 class TelegramOutgoingChannel implements OutgoingChannelInterface
@@ -19,11 +26,6 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
     ) {
     }
 
-    public function getConfig(): SimpleConfigInterface
-    {
-        return $this->config;
-    }
-
     public function send(
         OutgoingMessageInterface $message,
         SessionInterface $session,
@@ -31,7 +33,7 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
     ): OutgoingMessageInterface {
         $this->storeKeyboardMapToSession($message, $session);
 
-        if ($message instanceof TextOutgoingRegularMessage) {
+        if ($message instanceof TextOutgoingMessage) {
             $text = $message->getText();
 
             if ($message->getId()) {
@@ -54,6 +56,32 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
 
                 $message->setId($result['message_id'] ?? null);
             }
+        }
+
+        if ($message instanceof ForwardOutgoingRegularMessageInterface) {
+            $result = $this->sendForwardViaTelegramApi(
+                array_filter([
+                    'chat_id' => $message->getContext()->getRoom()->getId(),
+                    'from_chat_id' => $message->getTargetMessage()->getContext()->getRoom()->getId(),
+                    'message_id' => $message->getTargetMessage()->getId(),
+                    'reply_markup' => $this->keyboardToArray($message, $contextPage),
+                ])
+            );
+
+            $message->setId($result['message_id'] ?? null);
+        }
+
+        if ($message instanceof ImageOutgoingRegularMessageInterface) {
+            $result = $this->sendPhotoViaTelegramApi(
+                array_filter([
+                    'chat_id' => $message->getContext()->getRoom()->getId(),
+                    'photo' => $message->getImageUrl(),
+                    'caption' => $message->getCaption(),
+                    'reply_markup' => $this->keyboardToArray($message, $contextPage),
+                ])
+            );
+
+            $message->setId($result['message_id'] ?? null);
         }
 
         return $message;
@@ -116,7 +144,7 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
      * Generate telegram api keyboard payload
      */
     protected function keyboardToArray(
-        TextOutgoingRegularMessage $message,
+        OutgoingMessageInterface $message,
         ?PageInterface $contextPage
     ): array {
         $keyboard = $message->getKeyboard();
@@ -147,9 +175,17 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
             }, $row->getButtons());
         }
 
+        if ($keyboard instanceof CommonKeyboardInterface) {
+            return [
+                'keyboard' => $result,
+                'input_field_placeholder' => $keyboard->getPlaceholder(),
+                'resize_keyboard' => $keyboard->isResizable(),
+                'one_time_keyboard' => $keyboard->isOneTime(),
+            ];
+        }
+
         return [
             'keyboard' => $result,
-            'resize_keyboard' => true,
         ];
     }
 
@@ -175,6 +211,38 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         $client = $this->getClient($this->getApiToken());
 
         $response = $client->post('sendMessage', [
+            'json' => $payload,
+        ]);
+
+        return json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['result'] ?? [];
+    }
+
+    protected function sendForwardViaTelegramApi(array $payload): array
+    {
+        $client = $this->getClient($this->getApiToken());
+
+        $response = $client->post('forwardMessage', [
+            'json' => $payload,
+        ]);
+
+        return json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['result'] ?? [];
+    }
+
+    protected function sendPhotoViaTelegramApi(array $payload): array
+    {
+        $client = $this->getClient($this->getApiToken());
+
+        $response = $client->post('sendPhoto', [
             'json' => $payload,
         ]);
 

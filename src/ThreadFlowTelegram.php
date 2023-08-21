@@ -4,98 +4,42 @@ namespace SequentSoft\ThreadFlowTelegram;
 
 use Closure;
 use SequentSoft\ThreadFlow\Contracts\BotInterface;
+use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
 use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
 use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelRegistryInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
+use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
-use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\DataFetchers\InvokableDataFetcher;
+use SequentSoft\ThreadFlow\Events\Message\IncomingMessageProcessingEvent;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
+use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 
 class ThreadFlowTelegram
 {
-    public function __construct(
-        protected IncomingChannelRegistryInterface $incomingChannelRegistry,
-        protected OutgoingChannelRegistryInterface $outgoingChannelRegistry,
-        protected DispatcherFactoryInterface $dispatcherFactory,
-        protected BotInterface $bot,
-    ) {
-    }
+    public function __construct(protected BotManagerInterface $botManager) {}
 
-    public function handleData(
-        string $channelName,
-        array $data,
-        ?Closure $beforeDispatchCallback = null,
-        ?Closure $outgoingCallback = null
-    ): void {
+    public function handleData(string $channelName, array $data): void
+    {
         $invokableDataFetcher = new InvokableDataFetcher();
 
-        $this->listen($channelName, $invokableDataFetcher, $beforeDispatchCallback, $outgoingCallback);
+        $this->listen($channelName, $invokableDataFetcher);
 
         $invokableDataFetcher($data);
     }
 
-    public function listen(
-        string $channelName,
-        DataFetcherInterface $dataFetcher,
-        ?Closure $beforeDispatchCallback = null,
-        ?Closure $outgoingCallback = null
-    ): void {
-        $config = $this->getTelegramChannelConfig($channelName);
-
-        $dispatcherName = $config->get('dispatcher');
-
-        $outgoingChannel = $this->outgoingChannelRegistry->get($channelName, $config);
-        $incomingChannel = $this->incomingChannelRegistry->get($channelName, $config);
-        $dispatcher = $this->dispatcherFactory->make($dispatcherName);
-
-        $incomingChannel->listen(
-            $dataFetcher,
-            function (IncomingMessageInterface $message) use (
-                $outgoingCallback,
-                $beforeDispatchCallback,
-                $channelName,
-                $dispatcher,
-                $outgoingChannel,
-                $incomingChannel
-            ) {
-                if ($beforeDispatchCallback) {
-                    $beforeDispatchCallback($message);
-                }
-
-                $dispatcher->dispatch(
-                    $channelName,
-                    $message,
-                    fn(IncomingMessageInterface $message, SessionInterface $session) => $incomingChannel->preprocess(
-                        $message,
-                        $session
-                    ),
-                    function (
-                        OutgoingMessageInterface $message,
-                        SessionInterface $session,
-                        ?PageInterface $contextPage
-                    ) use (
-                        $outgoingChannel,
-                        $outgoingCallback
-                    ) {
-                        if ($outgoingCallback) {
-                            $outgoingCallback($message, $session, $contextPage);
-                        }
-
-                        $outgoingChannel->send($message, $session, $contextPage);
-                    },
-                );
-            }
-        );
+    public function listen(string $channelName, DataFetcherInterface $dataFetcher): void
+    {
+        $this->botManager->channel($channelName)->listen($dataFetcher);
     }
 
-    public function getTelegramChannelConfig(string $channelName): ConfigInterface
+    /**
+     * @throws ChannelNotConfiguredException
+     */
+    public function getTelegramChannelConfig(string $channelName): SimpleConfigInterface
     {
-        $config = $this->bot->getChannelConfig($channelName);
+        $config = $this->botManager->channel($channelName)->getConfig();
 
         if ($config->get('driver') !== 'telegram') {
             throw new ChannelNotConfiguredException("Channel {$channelName} is not configured for Telegram.");

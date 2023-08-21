@@ -8,11 +8,12 @@ use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\VideoIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface
+    CanCreateFromDataMessageInterface, WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
@@ -31,18 +32,15 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
             || isset($data['message']['animation']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $file = $data['message']['video']
             ?? $data['message']['video_note']
             ?? $data['message']['animation'];
 
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: $file['file_name'] ?? null,
@@ -53,7 +51,6 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
         $message->setFileSize($file['file_size'] ?? null);
         $message->setMimetype($file['mime_type'] ?? null);
         $message->setDuration($file['duration'] ?? null);
-        $message->setBotToken($channel->getConfig()->get('api_token'));
 
         $message->setRaw($data);
 
@@ -115,12 +112,6 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
         return $this;
     }
 
-    public function setBotToken(string $botToken): self
-    {
-        $this->botToken = $botToken;
-        return $this;
-    }
-
     public function getUrl(): ?string
     {
         if (! is_null($this->url)) {
@@ -133,5 +124,15 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
         );
 
         return $this->url;
+    }
+
+    public function getApiToken(): string
+    {
+        return $this->botToken;
+    }
+
+    public function setApiToken(string $apiToken): void
+    {
+        $this->botToken = $apiToken;
     }
 }

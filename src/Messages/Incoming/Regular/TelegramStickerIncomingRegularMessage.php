@@ -8,11 +8,12 @@ use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\StickerIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface
+    CanCreateFromDataMessageInterface, WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
@@ -27,14 +28,11 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
         return isset($data['message']['sticker']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: $data['message']['sticker']['emoji'] ?? null,
@@ -47,17 +45,10 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
         $message->setFileId($file['file_id']);
         $message->setFileUniqueId($file['file_unique_id']);
         $message->setFileSize($file['file_size'] ?? null);
-        $message->setBotToken($channel->getConfig()->get('api_token'));
 
         $message->setRaw($data);
 
         return $message;
-    }
-
-    public function setBotToken(string $botToken): self
-    {
-        $this->botToken = $botToken;
-        return $this;
     }
 
     public function getFileId(): ?string
@@ -105,5 +96,15 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
         );
 
         return $this->url;
+    }
+
+    public function getApiToken(): string
+    {
+        return $this->botToken;
+    }
+
+    public function setApiToken(string $apiToken): void
+    {
+        $this->botToken = $apiToken;
     }
 }

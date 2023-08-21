@@ -19,14 +19,11 @@ class TelegramLocationIncomingRegularMessage extends LocationIncomingRegularMess
         return isset($data['message']['location']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             latitude: $data['message']['location']['latitude'],
             longitude: $data['message']['location']['longitude'],

@@ -8,11 +8,12 @@ use SequentSoft\ThreadFlow\Messages\Incoming\Regular\AudioIncomingRegularMessage
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface
+    CanCreateFromDataMessageInterface, WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
@@ -29,14 +30,11 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         return isset($data['message']['voice']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: null,
@@ -49,7 +47,6 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         $message->setFileSize($file['file_size'] ?? null);
         $message->setMimetype($file['mime_type'] ?? null);
         $message->setDuration($file['duration'] ?? null);
-        $message->setBotToken($channel->getConfig()->get('api_token'));
 
         $message->setRaw($data);
 
@@ -100,12 +97,6 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         return $this;
     }
 
-    public function setBotToken(string $botToken): self
-    {
-        $this->botToken = $botToken;
-        return $this;
-    }
-
     public function getDuration(): ?int
     {
         return $this->duration;
@@ -129,5 +120,15 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         );
 
         return $this->url;
+    }
+
+    public function getApiToken(): string
+    {
+        return $this->botToken;
+    }
+
+    public function setApiToken(string $apiToken): void
+    {
+        $this->botToken = $apiToken;
     }
 }

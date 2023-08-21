@@ -4,8 +4,12 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
 use Exception;
 use Illuminate\Console\Command;
+use JsonException;
+use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Events\Message\IncomingMessageDispatchingEvent;
+use SequentSoft\ThreadFlow\Events\Message\OutgoingMessageSendingEvent;
 use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
@@ -15,20 +19,16 @@ class TelegramLongPollingCommand extends Command
 
     protected $description = 'Starts long polling for Telegram bot';
 
-    public function __construct(
-        protected ThreadFlowTelegram $threadFlowTelegram,
-    ) {
-        parent::__construct();
-    }
-
     /**
      * Handles the console command.
      */
-    public function handle()
+    public function handle(BotManagerInterface $botManager): void
     {
         $channelName = $this->argument('channel');
 
-        $config = $this->threadFlowTelegram->getTelegramChannelConfig($channelName);
+        $channelBot = $botManager->channel($channelName);
+
+        $config = $channelBot->getConfig();
 
         $token = $config->get('api_token');
 
@@ -39,7 +39,7 @@ class TelegramLongPollingCommand extends Command
         $this->output->title('ThreadFlow Telegram Long Polling');
 
         $this->line(
-            'Channel name: <comment>' . $channelName . '</comment>'
+            "Channel name: <comment>{$channelName}</comment>"
         );
 
         $this->line(
@@ -54,17 +54,28 @@ class TelegramLongPollingCommand extends Command
         $dataFetcher->afterFetch($this->handleAfterFetch(...));
         $dataFetcher->onFetchError($this->handleFetchError(...));
 
-        $this->threadFlowTelegram->listen(
-            channelName: $channelName,
-            dataFetcher: $dataFetcher,
-            beforeDispatchCallback: fn(IncomingMessageInterface $message) => $this->outputLogLine(
+        $channelBot->on(IncomingMessageDispatchingEvent::class, function (
+            IncomingMessageDispatchingEvent $event
+        ) {
+            $message = $event->getMessage();
+
+            $this->outputLogLine(
                 '<info>→ In</info>' . ($message->getStateId() ? ' <fg=blue>[BG-' . $message->getStateId(
                 ) . ']</>' : '') . ': <comment>' . get_class($message) . '</comment>'
-            ),
-            outgoingCallback: fn(OutgoingMessageInterface $message) => $this->outputLogLine(
+            );
+        });
+
+        $channelBot->on(OutgoingMessageSendingEvent::class, function (
+            OutgoingMessageSendingEvent $event
+        ) {
+            $message = $event->getMessage();
+
+            $this->outputLogLine(
                 '<info>← Out</info>: <comment>' . get_class($message) . '</comment>'
-            )
-        );
+            );
+        });
+
+        $channelBot->listen($dataFetcher);
     }
 
     /**
@@ -111,10 +122,11 @@ class TelegramLongPollingCommand extends Command
      * The callback function to be executed after data has been fetched.
      *
      * @param string $payload The payload returned by the fetch operation
+     * @throws JsonException
      */
     protected function handleAfterFetch(string $payload): void
     {
-        $parsedPayload = json_decode($payload, true);
+        $parsedPayload = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
 
         $isParsedOk = $parsedPayload !== null
             && json_last_error() === JSON_ERROR_NONE;

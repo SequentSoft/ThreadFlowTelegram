@@ -19,14 +19,11 @@ class TelegramContactIncomingRegularMessage extends ContactIncomingRegularMessag
         return isset($data['message']['contact']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             phoneNumber: $data['message']['contact']['phone_number'],
             firstName: $data['message']['contact']['first_name'] ?? '',

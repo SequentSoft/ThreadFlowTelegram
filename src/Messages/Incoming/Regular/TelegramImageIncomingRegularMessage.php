@@ -7,11 +7,12 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ImageIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface
+    CanCreateFromDataMessageInterface, WithApiTokenInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
@@ -28,14 +29,11 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
         return isset($data['message']['photo']);
     }
 
-    public static function createFromData(
-        IncomingChannelInterface $channel,
-        IncomingMessagesFactoryInterface $factory,
-        array $data
-    ): self {
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $channel, $factory),
+            context: static::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: null,
@@ -48,17 +46,10 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
         $message->setFileSize($lastImage['file_size'] ?? null);
         $message->setWidth($lastImage['width']);
         $message->setHeight($lastImage['height']);
-        $message->setBotToken($channel->getConfig()->get('api_token'));
 
         $message->setRaw($data);
 
         return $message;
-    }
-
-    public function setBotToken(string $botToken): self
-    {
-        $this->botToken = $botToken;
-        return $this;
     }
 
     public function getFileId(): ?string
@@ -128,5 +119,15 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
         );
 
         return $this->url;
+    }
+
+    public function getApiToken(): string
+    {
+        return $this->botToken;
+    }
+
+    public function setApiToken(string $apiToken): void
+    {
+        $this->botToken = $apiToken;
     }
 }

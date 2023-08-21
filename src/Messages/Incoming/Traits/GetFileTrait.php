@@ -3,9 +3,15 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 
 trait GetFileTrait
 {
+    /**
+     * @throws GuzzleException
+     * @throws JsonException
+     */
     public function getTelegramFileData(string $token, string $fileId): array
     {
         $client = new Client([
@@ -23,6 +29,10 @@ trait GetFileTrait
         return  $response['result'];
     }
 
+    /**
+     * @throws GuzzleException
+     * @throws JsonException
+     */
     public function getTelegramFileUrl(string $token, string $fileId): string
     {
         $data = $this->getTelegramFileData($token, $fileId);

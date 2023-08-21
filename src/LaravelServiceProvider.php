@@ -3,9 +3,11 @@
 namespace SequentSoft\ThreadFlowTelegram;
 
 use Illuminate\Support\ServiceProvider;
+use SequentSoft\ThreadFlow\Contracts\BotInterface;
 use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
 use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelRegistryInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
+use SequentSoft\ThreadFlow\Events\Message\IncomingMessageProcessingEvent;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramOutgoingChannel;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
@@ -28,7 +30,7 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramVideoIncomi
 
 class LaravelServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         $this->app->singleton(IncomingMessagesFactoryInterface::class, IncomingMessagesFactory::class);
     }
@@ -48,11 +50,11 @@ class LaravelServiceProvider extends ServiceProvider
         ];
     }
 
-    protected function bootWebhookRoutes()
+    protected function bootWebhookRoutes(): void
     {
         foreach ($this->app->get('config')->get('thread-flow.channels', []) as $channelData) {
             $driver = $channelData['driver'] ?? null;
-            $webhookUrl = $channelData['webhook_url'] ?? null;
+            $webhookUrl = ltrim(parse_url($channelData['webhook_url'] ?? '', PHP_URL_PATH), '/');
             $apiToken = $channelData['api_token'] ?? null;
 
             if ($driver === 'telegram' && $webhookUrl && $apiToken) {
@@ -64,7 +66,7 @@ class LaravelServiceProvider extends ServiceProvider
         }
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this->app->afterResolving(
             IncomingMessagesFactoryInterface::class,
@@ -82,14 +84,10 @@ class LaravelServiceProvider extends ServiceProvider
             function (IncomingChannelRegistryInterface $registry) {
                 $registry->register(
                     'telegram',
-                    function (SimpleConfigInterface $config) {
-                        return new TelegramIncomingChannel(
-                            $this->app->make(
-                                IncomingMessagesFactoryInterface::class
-                            ),
-                            $config
-                        );
-                    }
+                    fn(SimpleConfigInterface $config) => new TelegramIncomingChannel(
+                        $this->app->make(IncomingMessagesFactoryInterface::class),
+                        $config
+                    )
                 );
             }
         );
@@ -99,9 +97,7 @@ class LaravelServiceProvider extends ServiceProvider
             function (OutgoingChannelRegistryInterface $registry) {
                 $registry->register(
                     'telegram',
-                    function (SimpleConfigInterface $config) {
-                        return new TelegramOutgoingChannel($config);
-                    }
+                    fn (SimpleConfigInterface $config) => new TelegramOutgoingChannel($config)
                 );
             }
         );

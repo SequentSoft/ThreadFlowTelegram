@@ -7,5 +7,5 @@ use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 
 interface IncomingMessagesFactoryInterface
 {
-    public function make(IncomingChannelInterface $channel, array $data): IncomingMessageInterface;
+    public function make(array $data): IncomingMessageInterface;
 }
