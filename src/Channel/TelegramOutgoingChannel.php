@@ -8,6 +8,7 @@ use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\ButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\CommonKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\FileOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ImageOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\TextOutgoingRegularMessageInterface;
@@ -76,6 +77,19 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
                 array_filter([
                     'chat_id' => $message->getContext()->getRoom()->getId(),
                     'photo' => $message->getImageUrl(),
+                    'caption' => $message->getCaption(),
+                    'reply_markup' => $this->keyboardToArray($message, $contextPage),
+                ])
+            );
+
+            $message->setId($result['message_id'] ?? null);
+        }
+
+        if ($message instanceof FileOutgoingRegularMessageInterface) {
+            $result = $this->sendFileViaTelegramApi(
+                array_filter([
+                    'chat_id' => $message->getContext()->getRoom()->getId(),
+                    'document' => $message->getUrl(),
                     'caption' => $message->getCaption(),
                     'reply_markup' => $this->keyboardToArray($message, $contextPage),
                 ])
@@ -243,6 +257,22 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         $client = $this->getClient($this->getApiToken());
 
         $response = $client->post('sendPhoto', [
+            'json' => $payload,
+        ]);
+
+        return json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['result'] ?? [];
+    }
+
+    protected function sendFileViaTelegramApi(array $payload): array
+    {
+        $client = $this->getClient($this->getApiToken());
+
+        $response = $client->post('sendDocument', [
             'json' => $payload,
         ]);
 

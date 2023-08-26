@@ -19,14 +19,18 @@ class TelegramLongPollingCommand extends Command
 
     protected $description = 'Starts long polling for Telegram bot';
 
+    protected ?string $latestDateOutput = null;
+
+    protected string $currentChannelName;
+
     /**
      * Handles the console command.
      */
     public function handle(BotManagerInterface $botManager): void
     {
-        $channelName = $this->argument('channel');
+        $this->currentChannelName = $this->argument('channel');
 
-        $channelBot = $botManager->channel($channelName);
+        $channelBot = $botManager->channel($this->currentChannelName);
 
         $config = $channelBot->getConfig();
 
@@ -38,40 +42,63 @@ class TelegramLongPollingCommand extends Command
 
         $this->output->title('ThreadFlow Telegram Long Polling');
 
-        $this->line(
-            "Channel name: <comment>{$channelName}</comment>"
-        );
-
-        $this->line(
-            'Data fetch timeout: <comment>' . $dataFetcher->getTimeout() . ' sec</comment>'
-        );
-
-        $this->line(
-            'Dispatcher: <comment>' . $dispatcherName . '</comment>'
-        );
+        $this->getOutput()->listing([
+            "Channel name: <comment>{$this->currentChannelName}</comment>",
+            'Data fetch timeout: <comment>' . $dataFetcher->getTimeout() . ' sec</comment>',
+            'Dispatcher: <comment>' . $dispatcherName . '</comment>',
+        ]);
 
         $dataFetcher->beforeFetch($this->handleBeforeFetch(...));
         $dataFetcher->afterFetch($this->handleAfterFetch(...));
         $dataFetcher->onFetchError($this->handleFetchError(...));
 
-        $channelBot->on(IncomingMessageDispatchingEvent::class, function (
+
+        $botManager->on(IncomingMessageDispatchingEvent::class, function (
+            string $channelName,
             IncomingMessageDispatchingEvent $event
         ) {
             $message = $event->getMessage();
 
+            $from = $message->getContext()?->getRoom()->getId();
+            $classNameParts = explode('\\', get_class($message));
+            $classNameLatestPart = array_pop($classNameParts);
+            $classNamePath = implode('\\', $classNameParts);
+
             $this->outputLogLine(
-                '<info>→ In</info>' . ($message->getStateId() ? ' <fg=blue>[BG-' . $message->getStateId(
-                ) . ']</>' : '') . ': <comment>' . get_class($message) . '</comment>'
+                $channelName,
+                implode(
+                    ' ',
+                    array_filter([
+                        '<info>→ In:</info>',
+                        "{$classNamePath}\\\033[33m{$classNameLatestPart}\033[0m",
+                        ($from ? "#FROM:{$from}" : ''),
+                        ($message->getStateId() ? "#SID:" . $message->getStateId() : ''),
+                    ])
+                )
             );
         });
 
-        $channelBot->on(OutgoingMessageSendingEvent::class, function (
+        $botManager->on(OutgoingMessageSendingEvent::class, function (
+            string $channelName,
             OutgoingMessageSendingEvent $event
         ) {
             $message = $event->getMessage();
 
+            $to = $message->getContext()?->getRoom()->getId();
+            $classNameParts = explode('\\', get_class($message));
+            $classNameLatestPart = array_pop($classNameParts);
+            $classNamePath = implode('\\', $classNameParts);
+
             $this->outputLogLine(
-                '<info>← Out</info>: <comment>' . get_class($message) . '</comment>'
+                $channelName,
+                implode(
+                    ' ',
+                    array_filter([
+                        '<info>← Out:</info>',
+                        "{$classNamePath}\\\033[33m{$classNameLatestPart}\033[0m",
+                        ($to ? "#TO:{$to}" : ''),
+                    ])
+                )
             );
         });
 
@@ -88,11 +115,29 @@ class TelegramLongPollingCommand extends Command
         $this->line("");
 
         if ($attempt === 0) {
-            $this->outputLogLine('Fetching updates...', '*');
+            $this->outputLogLine(
+                $this->currentChannelName,
+                'Fetching updates...',
+                '*'
+            );
             return;
         }
 
-        $this->outputLogLine("[{$attempt} attempt] Fetching updates... ", '*');
+        $this->outputLogLine(
+            $this->currentChannelName,
+            "[{$attempt} attempt] Fetching updates... ",
+            '*'
+        );
+    }
+
+    protected function showDate(): void
+    {
+        $date = date('Y-m-d');
+
+        if ($this->latestDateOutput !== $date) {
+            $this->getOutput()->section('Date: ' . $date);
+            $this->latestDateOutput = $date;
+        }
     }
 
     /**
@@ -103,15 +148,19 @@ class TelegramLongPollingCommand extends Command
      * @param string|null $additionalMessage An optional additional message to append
      */
     protected function outputLogLine(
+        string $channelName,
         string $message,
         ?string $marker = null,
         ?string $additionalMessage = null
     ): void {
+        $this->showDate();
+
         $this->line(
             implode(' ', [
                 '',
                 $marker ?? ' ',
-                date('[Y-m-d H:i:s]'),
+                date('H:i:s') . ' |',
+                ($channelName === $this->currentChannelName ? $channelName : "<fg=red>{$channelName}</>") . ' |',
                 $message,
                 $additionalMessage ? "({$additionalMessage})" : ''
             ])
@@ -133,6 +182,7 @@ class TelegramLongPollingCommand extends Command
 
         if (! $isParsedOk) {
             $this->outputLogLine(
+                $this->currentChannelName,
                 "<error>Received invalid payload</error>: {$payload}"
             );
             return;
@@ -140,6 +190,7 @@ class TelegramLongPollingCommand extends Command
 
         if (! isset($parsedPayload['ok']) || $parsedPayload['ok'] !== true) {
             $this->outputLogLine(
+                $this->currentChannelName,
                 "<error>Received data with error</error>: {$payload}"
             );
             return;
@@ -147,6 +198,7 @@ class TelegramLongPollingCommand extends Command
 
         if (empty($parsedPayload['result'])) {
             $this->outputLogLine(
+                $this->currentChannelName,
                 'No updates received',
                 ' ',
                 'Transferred ' . strlen($payload) . ' bytes'
@@ -155,6 +207,7 @@ class TelegramLongPollingCommand extends Command
         }
 
         $this->outputLogLine(
+            $this->currentChannelName,
             '<info>Received updates</info>: '
             . '<comment>' . count($parsedPayload['result']) . '</comment>',
             ' ',
@@ -170,6 +223,7 @@ class TelegramLongPollingCommand extends Command
     protected function handleFetchError(Exception $exception): void
     {
         $this->outputLogLine(
+            $this->currentChannelName,
             "<error>Error occurred</error>: {$exception->getMessage()}"
         );
     }

@@ -21,7 +21,7 @@ class TelegramGetWebhookInfoCommand extends Command
      * @throws RequestException
      * @throws ChannelNotConfiguredException
      */
-    public function handle(ThreadFlowTelegram $threadFlowTelegram)
+    public function handle(ThreadFlowTelegram $threadFlowTelegram): void
     {
         $this->output->title('ThreadFlow Telegram Webhook Info');
 

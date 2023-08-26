@@ -3,6 +3,7 @@
 namespace SequentSoft\ThreadFlowTelegram;
 
 use Closure;
+use Exception;
 use SequentSoft\ThreadFlow\Contracts\BotInterface;
 use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
 use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
