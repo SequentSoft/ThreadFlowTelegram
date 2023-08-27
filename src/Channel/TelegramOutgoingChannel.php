@@ -12,6 +12,8 @@ use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\FileOutgoingRegul
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ImageOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\TextOutgoingRegularMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Service\TypingOutgoingServiceMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\WithKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\Keyboard\CommonKeyboard;
@@ -98,6 +100,15 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
             $message->setId($result['message_id'] ?? null);
         }
 
+        if ($message instanceof TypingOutgoingServiceMessageInterface) {
+            $this->sendTypingMessageViaTelegramApi(
+                array_filter([
+                    'chat_id' => $message->getContext()->getRoom()->getId(),
+                    'action' => $message->getType()->value,
+                ])
+            );
+        }
+
         return $message;
     }
 
@@ -105,6 +116,10 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         OutgoingMessageInterface $message,
         SessionInterface $session
     ): void {
+        if (! $message instanceof WithKeyboardInterface) {
+            return;
+        }
+
         $keyboard = $message->getKeyboard();
 
         if ($keyboard === null) {
@@ -161,6 +176,10 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         OutgoingMessageInterface $message,
         ?PageInterface $contextPage
     ): array {
+        if (! $message instanceof WithKeyboardInterface) {
+            return [];
+        }
+
         $keyboard = $message->getKeyboard();
 
         if ($keyboard === null) {
@@ -282,5 +301,14 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
             512,
             JSON_THROW_ON_ERROR
         )['result'] ?? [];
+    }
+
+    protected function sendTypingMessageViaTelegramApi(array $payload): void
+    {
+        $client = $this->getClient($this->getApiToken());
+
+        $client->post('sendChatAction', [
+            'json' => $payload,
+        ]);
     }
 }
