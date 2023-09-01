@@ -3,6 +3,7 @@
 namespace SequentSoft\ThreadFlowTelegram\Channel;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Utils;
 use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\ButtonInterface;
@@ -11,16 +12,12 @@ use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\FileOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ImageOutgoingRegularMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\TextOutgoingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Service\TypingOutgoingServiceMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\WithKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
-use SequentSoft\ThreadFlow\Keyboard\CommonKeyboard;
 use SequentSoft\ThreadFlow\Keyboard\InlineKeyboard;
-use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\ForwardOutgoingMessage;
 use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingMessage;
-use SequentSoft\ThreadFlow\Messages\Outgoing\Regular\TextOutgoingRegularMessage;
 
 class TelegramOutgoingChannel implements OutgoingChannelInterface
 {
@@ -88,16 +85,65 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         }
 
         if ($message instanceof FileOutgoingRegularMessageInterface) {
-            $result = $this->sendFileViaTelegramApi(
-                array_filter([
-                    'chat_id' => $message->getContext()->getRoom()->getId(),
-                    'document' => $message->getUrl(),
-                    'caption' => $message->getCaption(),
-                    'reply_markup' => $this->keyboardToArray($message, $contextPage),
-                ])
-            );
+            if ($message->getPath() !== null) {
+                $client = $this->getClient($this->getApiToken());
+
+                $response = $client->post('sendDocument', [
+                    'multipart' => [
+                        [
+                            'name' => 'chat_id',
+                            'contents' => $message->getContext()->getRoom()->getId(),
+                        ],
+                        [
+                            'name' => 'document',
+                            'contents' => Utils::tryFopen($message->getPath(), 'r'),
+                        ],
+                        [
+                            'name' => 'caption',
+                            'contents' => $message->getCaption(),
+                        ],
+                        [
+                            'name' => 'reply_markup',
+                            'contents' => $this->keyboardToArray($message, $contextPage) ?: '',
+                        ],
+                    ],
+                ]);
+
+                $result = json_decode(
+                    $response->getBody()->getContents(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                )['result'] ?? [];
+
+                $message->setId($result['message_id'] ?? null);
+
+                return $message;
+            }
+
+            $payload = array_filter([
+                'chat_id' => $message->getContext()->getRoom()->getId(),
+                'document' => $message->getUrl(),
+                'caption' => $message->getCaption(),
+                'reply_markup' => $this->keyboardToArray($message, $contextPage),
+            ]);
+
+            $client = $this->getClient($this->getApiToken());
+
+            $response = $client->post('sendDocument', [
+                'json' => $payload,
+            ]);
+
+            $result = json_decode(
+                $response->getBody()->getContents(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            )['result'] ?? [];
 
             $message->setId($result['message_id'] ?? null);
+
+            return $message;
         }
 
         if ($message instanceof TypingOutgoingServiceMessageInterface) {
@@ -276,22 +322,6 @@ class TelegramOutgoingChannel implements OutgoingChannelInterface
         $client = $this->getClient($this->getApiToken());
 
         $response = $client->post('sendPhoto', [
-            'json' => $payload,
-        ]);
-
-        return json_decode(
-            $response->getBody()->getContents(),
-            true,
-            512,
-            JSON_THROW_ON_ERROR
-        )['result'] ?? [];
-    }
-
-    protected function sendFileViaTelegramApi(array $payload): array
-    {
-        $client = $this->getClient($this->getApiToken());
-
-        $response = $client->post('sendDocument', [
             'json' => $payload,
         ]);
 
