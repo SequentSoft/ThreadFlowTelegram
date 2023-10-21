@@ -112,7 +112,7 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
             return $this->url;
         }
 
-        $this->url = $this->getTelegramFileUrl($this->fileId,);
+        $this->url = $this->getTelegramFileUrl($this->fileId);
 
         return $this->url;
     }

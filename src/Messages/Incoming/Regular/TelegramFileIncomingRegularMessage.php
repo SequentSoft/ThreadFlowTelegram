@@ -101,7 +101,7 @@ class TelegramFileIncomingRegularMessage extends FileIncomingRegularMessage impl
             return $this->url;
         }
 
-        $this->url = $this->getTelegramFileUrl($this->fileId,);
+        $this->url = $this->getTelegramFileUrl($this->fileId);
 
         return $this->url;
     }
