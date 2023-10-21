@@ -10,7 +10,10 @@ use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Events\Message\IncomingMessageProcessingEvent;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 use SequentSoft\ThreadFlowTelegram\Channel\TelegramOutgoingChannel;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\OutgoingApiMessageFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\HttpClient\GuzzleHttpClientFactory;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramDeleteWebhookCommand;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramGetWebhookInfoCommand;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramSetWebhookCommand;
@@ -27,26 +30,45 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramStickerInco
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramUnknownIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramVideoIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\FileApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ForwardApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ImageApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\TextApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\TypingApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\OutgoingApiMessageFactory;
 
 class LaravelServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->singleton(IncomingMessagesFactoryInterface::class, IncomingMessagesFactory::class);
+        $this->app->singleton(OutgoingApiMessageFactoryInterface::class, OutgoingApiMessageFactory::class);
+        $this->app->singleton(HttpClientFactoryInterface::class, GuzzleHttpClientFactory::class);
     }
 
-    protected function getMessagesMap(): array
+    protected function getDefaultIncomingMessagesTypes(): array
     {
         return [
-            'text' => TelegramTextIncomingRegularMessage::class,
-            'contact' => TelegramContactIncomingRegularMessage::class,
-            'location' => TelegramLocationIncomingRegularMessage::class,
-            'image' => TelegramImageIncomingRegularMessage::class,
-            'file' => TelegramFileIncomingRegularMessage::class,
-            'sticker' => TelegramStickerIncomingRegularMessage::class,
-            'video' => TelegramVideoIncomingRegularMessage::class,
-            'audio' => TelegramAudioIncomingRegularMessage::class,
-            'callback' => TelegramInlineButtonCallbackIncomingRegularMessage::class,
+            TelegramTextIncomingRegularMessage::class,
+            TelegramContactIncomingRegularMessage::class,
+            TelegramLocationIncomingRegularMessage::class,
+            TelegramImageIncomingRegularMessage::class,
+            TelegramFileIncomingRegularMessage::class,
+            TelegramStickerIncomingRegularMessage::class,
+            TelegramVideoIncomingRegularMessage::class,
+            TelegramAudioIncomingRegularMessage::class,
+            TelegramInlineButtonCallbackIncomingRegularMessage::class,
+        ];
+    }
+
+    protected function getDefaultOutgoingApiMessagesTypes(): array
+    {
+        return [
+            FileApiMessage::class,
+            ForwardApiMessage::class,
+            ImageApiMessage::class,
+            TextApiMessage::class,
+            TypingApiMessage::class,
         ];
     }
 
@@ -70,36 +92,39 @@ class LaravelServiceProvider extends ServiceProvider
     {
         $this->app->afterResolving(
             IncomingMessagesFactoryInterface::class,
-            function (IncomingMessagesFactory $factory) {
-                foreach ($this->getMessagesMap() as $key => $class) {
-                    $factory->registerMessage($key, $class);
-                }
+            fn(IncomingMessagesFactory $factory) => $factory
+                ->addMessageTypeClass($this->getDefaultIncomingMessagesTypes())
+                ->registerFallbackMessage(TelegramUnknownIncomingRegularMessage::class)
+        );
 
-                $factory->registerFallbackMessage(TelegramUnknownIncomingRegularMessage::class);
-            }
+        $this->app->afterResolving(
+            OutgoingApiMessageFactoryInterface::class,
+            fn(OutgoingApiMessageFactoryInterface $factory) => $factory
+                ->addApiMessageTypeClass($this->getDefaultOutgoingApiMessagesTypes())
         );
 
         $this->app->afterResolving(
             IncomingChannelRegistryInterface::class,
-            function (IncomingChannelRegistryInterface $registry) {
-                $registry->register(
-                    'telegram',
-                    fn(SimpleConfigInterface $config) => new TelegramIncomingChannel(
-                        $this->app->make(IncomingMessagesFactoryInterface::class),
-                        $config
-                    )
-                );
-            }
+            fn(IncomingChannelRegistryInterface $registry) => $registry->register(
+                'telegram',
+                fn(SimpleConfigInterface $config) => new TelegramIncomingChannel(
+                    $this->app->make(HttpClientFactoryInterface::class),
+                    $this->app->make(IncomingMessagesFactoryInterface::class),
+                    $config
+                )
+            )
         );
 
         $this->app->afterResolving(
             OutgoingChannelRegistryInterface::class,
-            function (OutgoingChannelRegistryInterface $registry) {
-                $registry->register(
-                    'telegram',
-                    fn (SimpleConfigInterface $config) => new TelegramOutgoingChannel($config)
-                );
-            }
+            fn(OutgoingChannelRegistryInterface $registry) => $registry->register(
+                'telegram',
+                fn(SimpleConfigInterface $config) => new TelegramOutgoingChannel(
+                    $this->app->make(HttpClientFactoryInterface::class),
+                    $this->app->make(OutgoingApiMessageFactoryInterface::class),
+                    $config
+                )
+            )
         );
 
         if ($this->app->runningInConsole()) {

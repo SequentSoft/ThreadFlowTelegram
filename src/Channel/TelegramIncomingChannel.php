@@ -10,26 +10,34 @@ use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\IncomingRegularMe
 use SequentSoft\ThreadFlow\Contracts\Session\PageStateInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
-use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 
 class TelegramIncomingChannel implements IncomingChannelInterface
 {
     public function __construct(
+        protected HttpClientFactoryInterface $httpClientFactory,
         protected IncomingMessagesFactoryInterface $messagesFactory,
         protected SimpleConfigInterface $config,
     ) {
     }
 
+    protected function getApiToken(): string
+    {
+        return $this->config->get('api_token');
+    }
+
     public function listen(DataFetcherInterface $fetcher, Closure $callback): void
     {
-        $apiToken = $this->config->get('api_token');
+        $apiToken = $this->getApiToken();
 
         $fetcher->fetch(function (array $update) use ($callback, $apiToken) {
             $message = $this->messagesFactory->make($update);
 
-            if ($message instanceof WithApiTokenInterface) {
+            if ($message instanceof InteractsWithHttpInterface) {
                 $message->setApiToken($apiToken);
+                $message->setHttpClientFactory($this->httpClientFactory);
             }
 
             $callback($message);

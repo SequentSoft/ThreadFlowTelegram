@@ -7,13 +7,13 @@ use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ImageIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
-use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\WithApiTokenInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
 class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage implements
     CanCreateFromDataMessageInterface,
-    WithApiTokenInterface
+    InteractsWithHttpInterface
 {
     use CreatesMessageContextFromDataTrait;
     use GetFileTrait;
@@ -23,7 +23,6 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
     protected ?int $fileSize = null;
     protected ?int $width = null;
     protected ?int $height = null;
-    protected ?string $botToken = null;
 
     public static function canCreateFromData(array $data): bool
     {
@@ -114,21 +113,8 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
             return $this->url;
         }
 
-        $this->url = $this->getTelegramFileUrl(
-            $this->botToken,
-            $this->fileId,
-        );
+        $this->url = $this->getTelegramFileUrl($this->fileId);
 
         return $this->url;
-    }
-
-    public function getApiToken(): string
-    {
-        return $this->botToken;
-    }
-
-    public function setApiToken(string $apiToken): void
-    {
-        $this->botToken = $apiToken;
     }
 }

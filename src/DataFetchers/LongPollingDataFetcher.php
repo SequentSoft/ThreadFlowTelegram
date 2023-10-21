@@ -4,8 +4,8 @@ namespace SequentSoft\ThreadFlowTelegram\DataFetchers;
 
 use Closure;
 use Exception;
-use GuzzleHttp\Client;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
 
 class LongPollingDataFetcher implements DataFetcherInterface
 {
@@ -16,18 +16,11 @@ class LongPollingDataFetcher implements DataFetcherInterface
     protected array $fetchErrorHandlers = [];
 
     public function __construct(
-        protected string $token,
+        protected HttpClientInterface $httpClient,
         protected int $timeout = 30,
         protected int $maxAttempts = 3,
         protected int $attemptDelay = 1,
     ) {
-    }
-
-    protected function getClient(string $token): Client
-    {
-        return new Client([
-            'base_uri' => "https://api.telegram.org/bot{$token}/",
-        ]);
     }
 
     public function beforeFetch(Closure $handler): void
@@ -51,7 +44,6 @@ class LongPollingDataFetcher implements DataFetcherInterface
     }
 
     protected function fetchUpdates(
-        Client $client,
         int $offset,
         int $maxAttempts,
         int $attemptDelay
@@ -65,12 +57,10 @@ class LongPollingDataFetcher implements DataFetcherInterface
             }
 
             try {
-                return (string)$client->post('getUpdates', [
-                    'json' => [
-                        'offset' => $offset,
-                        'timeout' => $this->timeout,
-                    ],
-                ])->getBody();
+                return $this->httpClient->postJson('getUpdates', [
+                    'offset' => $offset,
+                    'timeout' => $this->timeout,
+                ])->getRawData();
             } catch (Exception $e) {
                 $exception = $e;
                 foreach ($this->fetchErrorHandlers as $handler) {
@@ -91,11 +81,9 @@ class LongPollingDataFetcher implements DataFetcherInterface
     public function fetch(Closure $handleUpdate): void
     {
         $offset = 0;
-        $client = $this->getClient($this->token);
 
         while (true) {
             $updates = $this->fetchUpdates(
-                $client,
                 $offset,
                 $this->maxAttempts,
                 $this->attemptDelay

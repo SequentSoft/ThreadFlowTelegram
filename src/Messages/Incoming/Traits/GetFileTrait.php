@@ -2,41 +2,49 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use JsonException;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 
 trait GetFileTrait
 {
-    /**
-     * @throws GuzzleException
-     * @throws JsonException
-     */
-    public function getTelegramFileData(string $token, string $fileId): array
+    protected ?string $botToken = null;
+
+    protected HttpClientFactoryInterface $httpClientFactory;
+
+    public function getApiToken(): string
     {
-        $client = new Client([
-            'base_uri' => "https://api.telegram.org/bot{$token}/",
-        ]);
+        return $this->botToken;
+    }
 
-        $response = $client->post('getFile', [
-            'json' => [
-                'file_id' => $fileId,
-            ],
-        ]);
+    public function setApiToken(string $apiToken): void
+    {
+        $this->botToken = $apiToken;
+    }
 
-        $response = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+    public function getHttpClientFactory(): HttpClientFactoryInterface
+    {
+        return $this->httpClientFactory;
+    }
+
+    public function setHttpClientFactory(HttpClientFactoryInterface $httpClientFactory): void
+    {
+        $this->httpClientFactory = $httpClientFactory;
+    }
+
+    public function getTelegramFileData(string $fileId): array
+    {
+        $response = $this->httpClientFactory->create($this->botToken)->postJson('getFile', [
+            'file_id' => $fileId,
+        ])->getParsedData();
 
         return  $response['result'];
     }
 
-    /**
-     * @throws GuzzleException
-     * @throws JsonException
-     */
-    public function getTelegramFileUrl(string $token, string $fileId): string
+    public function getTelegramFileUrl(string $fileId): string
     {
-        $data = $this->getTelegramFileData($token, $fileId);
+        $data = $this->getTelegramFileData($fileId);
 
-        return "https://api.telegram.org/file/bot{$token}/" . $data['file_path'];
+        $baseUri = trim($this->httpClientFactory->create($this->botToken)->getBaseUri($this->botToken), '/') . '/';
+
+        return $baseUri . $data['file_path'];
     }
 }

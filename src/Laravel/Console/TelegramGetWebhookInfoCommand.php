@@ -4,9 +4,9 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
 use JsonException;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramGetWebhookInfoCommand extends Command
@@ -21,7 +21,7 @@ class TelegramGetWebhookInfoCommand extends Command
      * @throws RequestException
      * @throws ChannelNotConfiguredException
      */
-    public function handle(ThreadFlowTelegram $threadFlowTelegram): void
+    public function handle(ThreadFlowTelegram $threadFlowTelegram, HttpClientFactoryInterface $httpClientFactory): void
     {
         $this->output->title('ThreadFlow Telegram Webhook Info');
 
@@ -29,9 +29,11 @@ class TelegramGetWebhookInfoCommand extends Command
         $config = $threadFlowTelegram->getTelegramChannelConfig($channelName);
         $token = $config->get('api_token');
 
-        $response = Http::post("https://api.telegram.org/bot{$token}/getWebhookInfo")->throw()->json();
+        $parsedData = $httpClientFactory->create($token)
+            ->postJson('getWebhookInfo', [])
+            ->getParsedData();
 
-        $this->line(json_encode($response, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+        $this->line(json_encode($parsedData, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 
         $this->output->success('Successfully got webhook info');
     }

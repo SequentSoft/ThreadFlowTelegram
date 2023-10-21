@@ -2,16 +2,12 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
 use JsonException;
 use RuntimeException;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
-use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramSetWebhookCommand extends Command
@@ -36,10 +32,10 @@ class TelegramSetWebhookCommand extends Command
 
     /**
      * Handles the console command.
-     * @throws ChannelNotConfiguredException|RequestException
+     * @throws ChannelNotConfiguredException
      * @throws JsonException
      */
-    public function handle(ThreadFlowTelegram $threadFlowTelegram): void
+    public function handle(ThreadFlowTelegram $threadFlowTelegram, HttpClientFactoryInterface $httpClientFactory): void
     {
         $this->output->title('ThreadFlow Telegram Webhook Set');
 
@@ -62,7 +58,7 @@ class TelegramSetWebhookCommand extends Command
 
         $this->line('URL: ' . $url);
 
-        $response = Http::post("https://api.telegram.org/bot{$token}/setWebhook", array_filter([
+        $parsedResponse = $httpClientFactory->create($token)->postJson('setWebhook', array_filter([
             'url' => $url,
             'ip_address' => $webhookIpAddress,
             'max_connections' => $webhookMaxConnections,
@@ -82,9 +78,9 @@ class TelegramSetWebhookCommand extends Command
                 //'my_chat_member',
                 //'chat_member',
             ],
-        ]))->throw()->json();
+        ]))->getParsedData();
 
-        $this->line(json_encode($response, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+        $this->line(json_encode($parsedResponse, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 
         $this->output->success('Webhook has been set successfully');
     }

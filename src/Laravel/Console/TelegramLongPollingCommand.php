@@ -6,12 +6,10 @@ use Exception;
 use Illuminate\Console\Command;
 use JsonException;
 use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Events\Message\IncomingMessageDispatchingEvent;
 use SequentSoft\ThreadFlow\Events\Message\OutgoingMessageSendingEvent;
+use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
-use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramLongPollingCommand extends Command
 {
@@ -26,7 +24,7 @@ class TelegramLongPollingCommand extends Command
     /**
      * Handles the console command.
      */
-    public function handle(BotManagerInterface $botManager): void
+    public function handle(BotManagerInterface $botManager, HttpClientFactoryInterface $httpClientFactory): void
     {
         $this->currentChannelName = $this->argument('channel');
 
@@ -38,7 +36,12 @@ class TelegramLongPollingCommand extends Command
 
         $dispatcherName = $config->get('dispatcher');
 
-        $dataFetcher = new LongPollingDataFetcher($token);
+        $dataFetcher = new LongPollingDataFetcher(
+            $httpClientFactory->create($token),
+            $config->get('long_polling_timeout', 30),
+            $config->get('long_polling_max_attempts', 3),
+            $config->get('long_polling_attempt_delay', 1),
+        );
 
         $this->output->title('ThreadFlow Telegram Long Polling');
 

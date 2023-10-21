@@ -4,22 +4,31 @@ namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming;
 
 use InvalidArgumentException;
 use JsonException;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 
 class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
 {
-    protected array $messages = [];
+    protected array $messageTypes = [];
 
     /** @var class-string<CanCreateFromDataMessageInterface>|null */
     protected ?string $fallbackMessageClass = null;
 
-    public function registerMessage(string $key, string $messageClass): void
+    public function addMessageTypeClass(string|array $messageClass): self
     {
+        if (is_array($messageClass)) {
+            foreach ($messageClass as $item) {
+                $this->addMessageTypeClass($item);
+            }
+            return $this;
+        }
+
         $this->validateMessageClass($messageClass);
-        $this->messages[$key] = $messageClass;
+
+        array_unshift($this->messageTypes, $messageClass);
+
+        return $this;
     }
 
     /**
@@ -50,7 +59,7 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
      */
     public function make(array $data): IncomingMessageInterface
     {
-        foreach ($this->messages as $messageClass) {
+        foreach ($this->messageTypes as $messageClass) {
             if ($messageClass::canCreateFromData($data)) {
                 return $messageClass::createFromData($this, $data);
             }
