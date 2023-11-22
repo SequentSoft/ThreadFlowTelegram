@@ -6,8 +6,10 @@ use DateTimeImmutable;
 use SequentSoft\ThreadFlow\Messages\Incoming\Service\BotStartedIncomingServiceMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 
-class TelegramBotStartedIncomingServiceMessage extends BotStartedIncomingServiceMessage
+class TelegramBotStartedIncomingServiceMessage extends BotStartedIncomingServiceMessage implements
+    CanCreateFromDataMessageInterface
 {
     use CreatesMessageContextFromDataTrait;
 
@@ -19,9 +21,9 @@ class TelegramBotStartedIncomingServiceMessage extends BotStartedIncomingService
 
     public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
     {
-        $message = new static(
+        $message = new self(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $factory),
+            context: self::createMessageContextFromData($data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
         );
 
