@@ -24,7 +24,7 @@ class FileApiMessage extends BaseApiMessage
                 ['name' => 'document', 'contents' => fopen($outgoingMessage->getPath(), 'rb')],
                 ['name' => 'caption', 'contents' => $outgoingMessage->getCaption()],
                 ['name' => 'reply_markup', 'contents' => $data['reply_markup'] ?? null],
-            ])->getParsedData();
+            ])->getParsedDataResult();
         }
 
         // url file
@@ -34,6 +34,6 @@ class FileApiMessage extends BaseApiMessage
                 'document' => $outgoingMessage->getUrl(),
                 'caption' => $outgoingMessage->getCaption(),
             ])
-        )->getParsedData();
+        )->getParsedDataResult();
     }
 }

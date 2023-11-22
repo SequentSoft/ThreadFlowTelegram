@@ -21,6 +21,6 @@ class TextApiMessage extends BaseApiMessage
             array_merge($data, [
                 'text' => $outgoingMessage->getText(),
             ])
-        )->getParsedData();
+        )->getParsedDataResult();
     }
 }

@@ -24,7 +24,12 @@ class Response implements ResponseInterface
             true,
             512,
             JSON_THROW_ON_ERROR
-        )['result'] ?? [];
+        );
+    }
+
+    public function getParsedDataResult(): mixed
+    {
+        return $this->getParsedData()['result'] ?? [];
     }
 
     public function getStatusCode(): int

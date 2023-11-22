@@ -22,6 +22,6 @@ class ImageApiMessage extends BaseApiMessage
                 'photo' => $outgoingMessage->getImageUrl(),
                 'caption' => $outgoingMessage->getCaption(),
             ])
-        )->getParsedData();
+        )->getParsedDataResult();
     }
 }

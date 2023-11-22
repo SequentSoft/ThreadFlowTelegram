@@ -7,6 +7,7 @@ use JsonException;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Service\TelegramBotStartedIncomingServiceMessage;
 
 class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
 {
@@ -59,6 +60,11 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
      */
     public function make(array $data): IncomingMessageInterface
     {
+        // handle "/start" command
+        if (TelegramBotStartedIncomingServiceMessage::canCreateFromData($data)) {
+            return TelegramBotStartedIncomingServiceMessage::createFromData($this, $data);
+        }
+
         foreach ($this->messageTypes as $messageClass) {
             if ($messageClass::canCreateFromData($data)) {
                 return $messageClass::createFromData($this, $data);

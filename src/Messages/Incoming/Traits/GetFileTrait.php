@@ -34,7 +34,7 @@ trait GetFileTrait
     {
         $response = $this->httpClientFactory->create($this->botToken)->postJson('getFile', [
             'file_id' => $fileId,
-        ])->getParsedData();
+        ])->getParsedDataResult();
 
         return  $response['result'];
     }

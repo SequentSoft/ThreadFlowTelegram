@@ -15,12 +15,13 @@ class TypingApiMessage extends BaseApiMessage
 
     protected function send(HttpClientInterface $client, OutgoingMessageInterface $outgoingMessage, array $data): array
     {
-        /** @var TypingOutgoingServiceMessageInterface $outgoingMessage */
-        return $client->postJson(
+        $client->postJson(
             'sendChatAction',
             array_merge($data, [
                 'action' => 'typing',
             ])
-        )->getParsedData();
+        );
+
+        return [];
     }
 }

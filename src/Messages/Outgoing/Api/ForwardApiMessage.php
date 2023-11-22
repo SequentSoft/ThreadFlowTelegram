@@ -21,6 +21,6 @@ class ForwardApiMessage extends BaseApiMessage
             array_merge($data, [
                 'from_chat_id' => $outgoingMessage->getTargetMessage()->getContext()->getRoom()->getId(),
             ])
-        )->getParsedData();
+        )->getParsedDataResult();
     }
 }

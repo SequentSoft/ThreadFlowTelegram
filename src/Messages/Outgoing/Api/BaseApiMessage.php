@@ -49,15 +49,15 @@ abstract class BaseApiMessage implements ApiMessageInterface
     protected function makeMessageKeyboardPayload(
         OutgoingMessageInterface $message,
         ?PageInterface $contextPage
-    ): array {
+    ): ?array {
         if (! $message instanceof WithKeyboardInterface) {
-            return [];
+            return null;
         }
 
         $keyboard = $message->getKeyboard();
 
         if ($keyboard === null) {
-            return [];
+            return null;
         }
 
         $result = [];
@@ -92,7 +92,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
         }
 
         return [
-            'keyboard' => $result,
+            'keyboard' => $result ?: null,
         ];
     }
 
@@ -105,11 +105,11 @@ abstract class BaseApiMessage implements ApiMessageInterface
         return $this->send(
             $client,
             $this->outgoingMessage,
-            [
+            array_filter([
                 'chat_id' => $this->outgoingMessage->getContext()->getRoom()->getId(),
                 'message_id' => $this->outgoingMessage->getId(),
                 'reply_markup' => $this->makeMessageKeyboardPayload($this->outgoingMessage, $this->contextPage),
-            ]
+            ])
         );
     }
 
