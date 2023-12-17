@@ -3,7 +3,9 @@
 namespace SequentSoft\ThreadFlowTelegram\Channel;
 
 use Closure;
+use DateTimeImmutable;
 use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
+use SequentSoft\ThreadFlow\Contracts\Chat\MessageContextInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\IncomingRegularMessageInterface;
@@ -60,5 +62,27 @@ class TelegramIncomingChannel implements IncomingChannelInterface
         }
 
         return $message;
+    }
+
+    public function makeMessageFromText(
+        string $id,
+        string $text,
+        DateTimeImmutable $date,
+        MessageContextInterface $context
+    ): ?IncomingMessageInterface {
+        return $this->messagesFactory->make([
+            'message' => [
+                'from' => [
+                    'id' => $context->getParticipant()->getId(),
+                ],
+                'chat' => [
+                    'id' => $context->getRoom()->getId(),
+                    'type' => $context->getRoom()->getType() ?? 'private',
+                ],
+                'text' => $text,
+                'message_id' => $id,
+                'date' => $date->getTimestamp(),
+            ],
+        ]);
     }
 }
