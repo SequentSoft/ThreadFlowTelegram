@@ -32,11 +32,9 @@ trait GetFileTrait
 
     public function getTelegramFileData(string $fileId): array
     {
-        $response = $this->httpClientFactory->create($this->botToken)->postJson('getFile', [
+        return $this->httpClientFactory->create($this->botToken)->postJson('getFile', [
             'file_id' => $fileId,
         ])->getParsedDataResult();
-
-        return  $response['result'];
     }
 
     public function getTelegramFileUrl(string $fileId): string
