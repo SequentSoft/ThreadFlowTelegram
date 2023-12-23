@@ -46,6 +46,23 @@ abstract class BaseApiMessage implements ApiMessageInterface
         ]);
     }
 
+    protected function makeReplyMarkup(
+        OutgoingMessageInterface $message,
+        ?PageInterface $contextPage
+    ): ?array {
+        $replyMarkup = [];
+
+        $keyboard = $this->makeMessageKeyboardPayload($message, $contextPage);
+
+        if ($keyboard) {
+            $replyMarkup = array_merge($replyMarkup, $keyboard);
+        } else {
+            $replyMarkup['remove_keyboard'] = true;
+        }
+
+        return $replyMarkup;
+    }
+
     protected function makeMessageKeyboardPayload(
         OutgoingMessageInterface $message,
         ?PageInterface $contextPage
@@ -108,7 +125,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
             array_filter([
                 'chat_id' => $this->outgoingMessage->getContext()->getRoom()->getId(),
                 'message_id' => $this->outgoingMessage->getId(),
-                'reply_markup' => $this->makeMessageKeyboardPayload($this->outgoingMessage, $this->contextPage),
+                'reply_markup' => $this->makeReplyMarkup($this->outgoingMessage, $this->contextPage),
             ])
         );
     }
