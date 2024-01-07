@@ -5,11 +5,19 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 use Exception;
 use Illuminate\Console\Command;
 use JsonException;
-use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
+use SequentSoft\ThreadFlow\Config;
+use SequentSoft\ThreadFlow\Contracts\Channel\ChannelManagerInterface;
+use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
+use SequentSoft\ThreadFlow\Contracts\Session\SessionStoreFactoryInterface;
+use SequentSoft\ThreadFlow\Contracts\Session\SessionStoreInterface;
+use SequentSoft\ThreadFlow\Events\EventBus;
 use SequentSoft\ThreadFlow\Events\Message\IncomingMessageDispatchingEvent;
 use SequentSoft\ThreadFlow\Events\Message\OutgoingMessageSendingEvent;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\OutgoingApiMessageFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
+use SequentSoft\ThreadFlowTelegram\TelegramChannel;
 
 class TelegramLongPollingCommand extends Command
 {
@@ -24,13 +32,11 @@ class TelegramLongPollingCommand extends Command
     /**
      * Handles the console command.
      */
-    public function handle(BotManagerInterface $botManager, HttpClientFactoryInterface $httpClientFactory): void
+    public function handle(ChannelManagerInterface $channelManager, HttpClientFactoryInterface $httpClientFactory): void
     {
         $this->currentChannelName = $this->argument('channel');
 
-        $channelBot = $botManager->channel($this->currentChannelName);
-
-        $config = $channelBot->getConfig();
+        $config = new Config(config("thread-flow.channels.{$this->currentChannelName}", []));
 
         $token = $config->get('api_token');
 
@@ -56,7 +62,7 @@ class TelegramLongPollingCommand extends Command
         $dataFetcher->onFetchError($this->handleFetchError(...));
 
 
-        $botManager->on(IncomingMessageDispatchingEvent::class, function (
+        $channelManager->on(IncomingMessageDispatchingEvent::class, function (
             string $channelName,
             IncomingMessageDispatchingEvent $event
         ) {
@@ -81,7 +87,7 @@ class TelegramLongPollingCommand extends Command
             );
         });
 
-        $botManager->on(OutgoingMessageSendingEvent::class, function (
+        $channelManager->on(OutgoingMessageSendingEvent::class, function (
             string $channelName,
             OutgoingMessageSendingEvent $event
         ) {
@@ -105,7 +111,7 @@ class TelegramLongPollingCommand extends Command
             );
         });
 
-        $channelBot->listen($dataFetcher);
+        $channelManager->channel($this->currentChannelName)->listen($dataFetcher);
     }
 
     /**

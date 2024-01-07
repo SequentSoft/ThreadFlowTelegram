@@ -8,10 +8,12 @@ use SequentSoft\ThreadFlow\Messages\Incoming\Regular\TextIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\WithMessageReactions;
 
 class TelegramTextIncomingRegularMessage extends TextIncomingRegularMessage implements CanCreateFromDataMessageInterface
 {
     use CreatesMessageContextFromDataTrait;
+    use WithMessageReactions;
 
     public static function canCreateFromData(array $data): bool
     {

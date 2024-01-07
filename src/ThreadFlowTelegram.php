@@ -2,24 +2,15 @@
 
 namespace SequentSoft\ThreadFlowTelegram;
 
-use Closure;
-use Exception;
-use SequentSoft\ThreadFlow\Contracts\BotInterface;
-use SequentSoft\ThreadFlow\Contracts\BotManagerInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelRegistryInterface;
+use SequentSoft\ThreadFlow\Contracts\Channel\ChannelManagerInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
-use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
-use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
 use SequentSoft\ThreadFlow\DataFetchers\InvokableDataFetcher;
-use SequentSoft\ThreadFlow\Events\Message\IncomingMessageProcessingEvent;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
-use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
 
 class ThreadFlowTelegram
 {
-    public function __construct(protected BotManagerInterface $botManager)
+    public function __construct(protected ChannelManagerInterface $channelManager)
     {
     }
 
@@ -34,15 +25,15 @@ class ThreadFlowTelegram
 
     public function listen(string $channelName, DataFetcherInterface $dataFetcher): void
     {
-        $this->botManager->channel($channelName)->listen($dataFetcher);
+        $this->channelManager->channel($channelName)->listen($dataFetcher);
     }
 
     /**
      * @throws ChannelNotConfiguredException
      */
-    public function getTelegramChannelConfig(string $channelName): SimpleConfigInterface
+    public function getTelegramChannelConfig(string $channelName): ConfigInterface
     {
-        $config = $this->botManager->channel($channelName)->getConfig();
+        $config = $this->channelManager->channel($channelName)->getConfig();
 
         if ($config->get('driver') !== 'telegram') {
             throw new ChannelNotConfiguredException("Channel {$channelName} is not configured for Telegram.");

@@ -3,13 +3,11 @@
 namespace SequentSoft\ThreadFlowTelegram;
 
 use Illuminate\Support\ServiceProvider;
-use SequentSoft\ThreadFlow\Contracts\BotInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelRegistryInterface;
-use SequentSoft\ThreadFlow\Contracts\Channel\Outgoing\OutgoingChannelRegistryInterface;
-use SequentSoft\ThreadFlow\Contracts\Config\SimpleConfigInterface;
-use SequentSoft\ThreadFlow\Events\Message\IncomingMessageProcessingEvent;
-use SequentSoft\ThreadFlowTelegram\Channel\TelegramIncomingChannel;
-use SequentSoft\ThreadFlowTelegram\Channel\TelegramOutgoingChannel;
+use SequentSoft\ThreadFlow\Contracts\Channel\ChannelManagerInterface;
+use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
+use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
+use SequentSoft\ThreadFlow\Contracts\Events\EventBusInterface;
+use SequentSoft\ThreadFlow\Contracts\Session\SessionStoreInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\OutgoingApiMessageFactoryInterface;
@@ -33,6 +31,7 @@ use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramVideoIncomi
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\FileApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ForwardApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ImageApiMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\MessageReactionApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\TextApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\TypingApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\OutgoingApiMessageFactory;
@@ -69,6 +68,7 @@ class LaravelServiceProvider extends ServiceProvider
             ImageApiMessage::class,
             TextApiMessage::class,
             TypingApiMessage::class,
+            MessageReactionApiMessage::class,
         ];
     }
 
@@ -91,6 +91,29 @@ class LaravelServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->app->afterResolving(
+            ChannelManagerInterface::class,
+            fn(ChannelManagerInterface $channelManager) => $channelManager->registerChannelDriver(
+                'telegram',
+                fn(
+                    string $channelName,
+                    ConfigInterface $config,
+                    SessionStoreInterface $sessionStore,
+                    DispatcherFactoryInterface $dispatcherFactory,
+                    EventBusInterface $eventBus
+                ) => new TelegramChannel(
+                    $channelName,
+                    $config,
+                    $sessionStore,
+                    $dispatcherFactory,
+                    $eventBus,
+                    $this->app->make(HttpClientFactoryInterface::class),
+                    $this->app->make(IncomingMessagesFactoryInterface::class),
+                    $this->app->make(OutgoingApiMessageFactoryInterface::class),
+                )
+            )
+        );
+
+        $this->app->afterResolving(
             IncomingMessagesFactoryInterface::class,
             fn(IncomingMessagesFactory $factory) => $factory
                 ->addMessageTypeClass($this->getDefaultIncomingMessagesTypes())
@@ -101,30 +124,6 @@ class LaravelServiceProvider extends ServiceProvider
             OutgoingApiMessageFactoryInterface::class,
             fn(OutgoingApiMessageFactoryInterface $factory) => $factory
                 ->addApiMessageTypeClass($this->getDefaultOutgoingApiMessagesTypes())
-        );
-
-        $this->app->afterResolving(
-            IncomingChannelRegistryInterface::class,
-            fn(IncomingChannelRegistryInterface $registry) => $registry->register(
-                'telegram',
-                fn(SimpleConfigInterface $config) => new TelegramIncomingChannel(
-                    $this->app->make(HttpClientFactoryInterface::class),
-                    $this->app->make(IncomingMessagesFactoryInterface::class),
-                    $config
-                )
-            )
-        );
-
-        $this->app->afterResolving(
-            OutgoingChannelRegistryInterface::class,
-            fn(OutgoingChannelRegistryInterface $registry) => $registry->register(
-                'telegram',
-                fn(SimpleConfigInterface $config) => new TelegramOutgoingChannel(
-                    $this->app->make(HttpClientFactoryInterface::class),
-                    $this->app->make(OutgoingApiMessageFactoryInterface::class),
-                    $config
-                )
-            )
         );
 
         if ($this->app->runningInConsole()) {
