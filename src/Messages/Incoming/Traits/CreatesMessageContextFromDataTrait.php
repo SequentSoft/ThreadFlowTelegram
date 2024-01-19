@@ -3,7 +3,6 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits;
 
 use SequentSoft\ThreadFlow\Chat\MessageContext;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 
 trait CreatesMessageContextFromDataTrait

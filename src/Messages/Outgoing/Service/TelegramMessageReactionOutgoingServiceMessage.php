@@ -10,7 +10,7 @@ class TelegramMessageReactionOutgoingServiceMessage extends OutgoingServiceMessa
 {
     protected bool $isBig = false;
 
-    public function __construct(protected string $targetMessageId, protected EmojiReaction $reaction)
+    final public function __construct(protected string $targetMessageId, protected EmojiReaction $reaction)
     {
     }
 

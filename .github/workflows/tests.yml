@@ -36,4 +36,4 @@ jobs:
       run: COMPOSER_ROOT_VERSION=0.0.2 composer update --${{ matrix.dependency-version }} --no-interaction --prefer-dist
 
     - name: Integration Tests
-      run: php ./vendor/bin/pest
+      run: composer run test:unit

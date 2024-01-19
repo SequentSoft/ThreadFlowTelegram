@@ -3,7 +3,6 @@
 namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Http\Client\RequestException;
 use JsonException;
 use RuntimeException;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;

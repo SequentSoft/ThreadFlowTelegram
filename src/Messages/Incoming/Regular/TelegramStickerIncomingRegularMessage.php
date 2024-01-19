@@ -3,8 +3,6 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Contracts\Channel\Incoming\IncomingChannelInterface;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\StickerIncomingRegularMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;

@@ -4,13 +4,13 @@ namespace SequentSoft\ThreadFlowTelegram;
 
 use DateTimeImmutable;
 use SequentSoft\ThreadFlow\Channel\Channel;
+use SequentSoft\ThreadFlow\Contracts\Chat\MessageContextInterface;
 use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
 use SequentSoft\ThreadFlow\Contracts\Events\EventBusInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\IncomingRegularMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\TextIncomingRegularMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\WithKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
@@ -49,16 +49,16 @@ class TelegramChannel extends Channel
         return $this->config->get('api_token');
     }
 
-    protected function testInputText(string $text): IncomingMessageInterface
+    protected function testInputText(string $text, MessageContextInterface $context): IncomingMessageInterface
     {
         return $this->messagesFactory->make([
             'message' => [
                 'from' => [
-                    'id' => $this->fakeMessageContext()->getParticipant()->getId(),
+                    'id' => $context->getParticipant()->getId(),
                 ],
                 'chat' => [
-                    'id' => $this->fakeMessageContext()->getRoom()->getId(),
-                    'type' => $this->fakeMessageContext()->getRoom()->getType() ?? 'private',
+                    'id' => $context->getRoom()->getId(),
+                    'type' => $context->getRoom()->getType() ?? 'private',
                 ],
                 'text' => $text,
                 'message_id' => 'test',

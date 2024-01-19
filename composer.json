@@ -19,7 +19,7 @@
     "require": {
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.3",
-        "sequentsoft/threadflow": "^0.4.0"
+        "sequentsoft/threadflow": "^0.5.0"
     },
     "require-dev": {
         "laravel/framework": "^9.0|^10.0",
@@ -56,8 +56,7 @@
         }
     },
     "scripts": {
-        "lint": "php-cs-fixer fix -v",
-        "test:lint": "phpcs",
+        "test:lint": "./vendor/bin/pint --test",
         "test:types": "phpstan analyse --ansi --memory-limit=-1",
         "test:unit": "pest --colors=always",
         "test": [

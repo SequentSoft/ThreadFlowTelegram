@@ -92,9 +92,9 @@ class LaravelServiceProvider extends ServiceProvider
     {
         $this->app->afterResolving(
             ChannelManagerInterface::class,
-            fn(ChannelManagerInterface $channelManager) => $channelManager->registerChannelDriver(
+            fn (ChannelManagerInterface $channelManager) => $channelManager->registerChannelDriver(
                 'telegram',
-                fn(
+                fn (
                     string $channelName,
                     ConfigInterface $config,
                     SessionStoreInterface $sessionStore,
@@ -115,14 +115,14 @@ class LaravelServiceProvider extends ServiceProvider
 
         $this->app->afterResolving(
             IncomingMessagesFactoryInterface::class,
-            fn(IncomingMessagesFactory $factory) => $factory
+            fn (IncomingMessagesFactory $factory) => $factory
                 ->addMessageTypeClass($this->getDefaultIncomingMessagesTypes())
                 ->registerFallbackMessage(TelegramUnknownIncomingRegularMessage::class)
         );
 
         $this->app->afterResolving(
             OutgoingApiMessageFactoryInterface::class,
-            fn(OutgoingApiMessageFactoryInterface $factory) => $factory
+            fn (OutgoingApiMessageFactoryInterface $factory) => $factory
                 ->addApiMessageTypeClass($this->getDefaultOutgoingApiMessagesTypes())
         );
 

@@ -76,4 +76,3 @@ enum EmojiReaction: string
     case MAN_TECHNOLOGIST = '👨‍💻';
     case PERSON_SHRUGGING = '🤷';
 }
-
