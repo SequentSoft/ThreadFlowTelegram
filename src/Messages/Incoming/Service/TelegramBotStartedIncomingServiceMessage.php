@@ -19,11 +19,11 @@ class TelegramBotStartedIncomingServiceMessage extends BotStartedIncomingService
             && $data['message']['text'] === '/start';
     }
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
         $message = new self(
             id: $data['message']['message_id'],
-            context: self::createMessageContextFromData($data, $factory),
+            context: self::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
         );
 

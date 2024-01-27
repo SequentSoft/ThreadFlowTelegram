@@ -72,13 +72,13 @@ class TelegramFileIncomingRegularMessage extends FileIncomingRegularMessage impl
         return $this->mimetype;
     }
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
         $document = $data['message']['document'];
 
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $factory),
+            context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: $document['file_name'] ?? null,

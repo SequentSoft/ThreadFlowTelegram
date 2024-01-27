@@ -51,7 +51,7 @@ class TelegramChannel extends Channel
 
     protected function testInputText(string $text, MessageContextInterface $context): IncomingMessageInterface
     {
-        return $this->messagesFactory->make([
+        return $this->messagesFactory->make($this->channelName, [
             'message' => [
                 'from' => [
                     'id' => $context->getParticipant()->getId(),
@@ -78,7 +78,7 @@ class TelegramChannel extends Channel
         $apiToken = $this->getApiToken();
 
         $fetcher->fetch(function (array $update) use ($apiToken) {
-            $message = $this->messagesFactory->make($update);
+            $message = $this->messagesFactory->make($this->channelName, $update);
 
             if ($message instanceof InteractsWithHttpInterface) {
                 $message->setApiToken($apiToken);
@@ -115,6 +115,8 @@ class TelegramChannel extends Channel
         OutgoingMessageInterface $message,
         SessionInterface $session
     ): void {
+        $session->delete('$telegramKeyboardMap');
+
         if (! $message instanceof WithKeyboardInterface) {
             return;
         }

@@ -6,5 +6,5 @@ interface CanCreateFromDataMessageInterface
 {
     public static function canCreateFromData(array $data): bool;
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self;
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self;
 }

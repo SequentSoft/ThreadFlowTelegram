@@ -8,5 +8,5 @@ interface IncomingMessagesFactoryInterface
 {
     public function addMessageTypeClass(string|array $messageClass): self;
 
-    public function make(array $data): IncomingMessageInterface;
+    public function make(string $channelName, array $data): IncomingMessageInterface;
 }

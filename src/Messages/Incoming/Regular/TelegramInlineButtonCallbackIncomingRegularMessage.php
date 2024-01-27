@@ -15,7 +15,7 @@ class TelegramInlineButtonCallbackIncomingRegularMessage extends TelegramTextInc
         return isset($data['callback_query']);
     }
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
         $exploded = explode(':', $data['callback_query']['data'], 2);
         $stateId = null;
@@ -29,7 +29,7 @@ class TelegramInlineButtonCallbackIncomingRegularMessage extends TelegramTextInc
 
         $message = new static(
             id: $data['callback_query']['id'],
-            context: static::createMessageContextFromData($data['callback_query'], $factory),
+            context: static::createMessageContextFromData($channelName, $data['callback_query'], $factory),
             timestamp: new DateTimeImmutable(),
             text: $data['callback_query']['data'],
         );

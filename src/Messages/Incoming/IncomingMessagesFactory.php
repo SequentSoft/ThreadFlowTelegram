@@ -58,23 +58,23 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
     /**
      * @throws JsonException
      */
-    public function make(array $data): IncomingMessageInterface
+    public function make(string $channelName, array $data): IncomingMessageInterface
     {
         // handle "/start" command
         if (TelegramBotStartedIncomingServiceMessage::canCreateFromData($data)) {
-            return TelegramBotStartedIncomingServiceMessage::createFromData($this, $data);
+            return TelegramBotStartedIncomingServiceMessage::createFromData($this, $channelName, $data);
         }
 
         foreach ($this->messageTypes as $messageClass) {
             if ($messageClass::canCreateFromData($data)) {
-                return $messageClass::createFromData($this, $data);
+                return $messageClass::createFromData($this, $channelName, $data);
             }
         }
 
         if ($this->fallbackMessageClass) {
             /** @var class-string<CanCreateFromDataMessageInterface> $fallbackMessageClass */
             $fallbackMessageClass = $this->fallbackMessageClass;
-            return $fallbackMessageClass::createFromData($this, $data);
+            return $fallbackMessageClass::createFromData($this, $channelName, $data);
         }
 
         throw new InvalidArgumentException(

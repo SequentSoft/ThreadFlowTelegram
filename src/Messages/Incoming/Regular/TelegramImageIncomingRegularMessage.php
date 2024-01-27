@@ -28,11 +28,11 @@ class TelegramImageIncomingRegularMessage extends ImageIncomingRegularMessage im
         return isset($data['message']['photo']);
     }
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $factory),
+            context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: null,

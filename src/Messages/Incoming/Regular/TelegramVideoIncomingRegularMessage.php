@@ -30,7 +30,7 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
             || isset($data['message']['animation']);
     }
 
-    public static function createFromData(IncomingMessagesFactoryInterface $factory, array $data): self
+    public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
         $file = $data['message']['video']
             ?? $data['message']['video_note']
@@ -38,7 +38,7 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
 
         $message = new static(
             id: $data['message']['message_id'],
-            context: static::createMessageContextFromData($data, $factory),
+            context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
             name: $file['file_name'] ?? null,
