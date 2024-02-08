@@ -11,7 +11,7 @@ use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramGetWebhookInfoCommand extends Command
 {
-    protected $signature = 'thread-flow:telegram:webhook-info {channel=telegram}';
+    protected $signature = 'threadflow:telegram-webhook-info {--channel=telegram}';
 
     protected $description = 'Gets webhook info for Telegram bot';
 
@@ -25,7 +25,7 @@ class TelegramGetWebhookInfoCommand extends Command
     {
         $this->output->title('ThreadFlow Telegram Webhook Info');
 
-        $channelName = $this->argument('channel');
+        $channelName = $this->option('channel');
         $config = $threadFlowTelegram->getTelegramChannelConfig($channelName);
         $token = $config->get('api_token');
 

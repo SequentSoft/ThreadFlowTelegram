@@ -14,7 +14,7 @@ use SequentSoft\ThreadFlowTelegram\DataFetchers\LongPollingDataFetcher;
 
 class TelegramLongPollingCommand extends Command
 {
-    protected $signature = 'thread-flow:telegram:long-polling {channel=telegram}';
+    protected $signature = 'threadflow:telegram-polling {--channel=telegram} {--timeout=}';
 
     protected $description = 'Starts long polling for Telegram bot';
 
@@ -27,17 +27,28 @@ class TelegramLongPollingCommand extends Command
      */
     public function handle(ChannelManagerInterface $channelManager, HttpClientFactoryInterface $httpClientFactory): void
     {
-        $this->currentChannelName = $this->argument('channel');
+        $this->currentChannelName = $this->option('channel');
 
-        $config = new Config(config("thread-flow.channels.{$this->currentChannelName}", []));
+        $rawConfig = config("thread-flow.channels.{$this->currentChannelName}", []);
+
+        if (! $rawConfig) {
+            $this->output->error("Channel '{$this->currentChannelName}' is not configured");
+            return;
+        }
+
+        $config = new Config($rawConfig);
 
         $token = $config->get('api_token');
 
+        // TODO: show error if token is not set
+
         $dispatcherName = $config->get('dispatcher');
+
+        $timeout = ((int) $this->option('timeout')) ?: $config->get('long_polling_timeout', 30);
 
         $dataFetcher = new LongPollingDataFetcher(
             $httpClientFactory->create($token),
-            $config->get('long_polling_timeout', 30),
+            $timeout,
             $config->get('long_polling_max_attempts', 3),
             $config->get('long_polling_attempt_delay', 1),
         );

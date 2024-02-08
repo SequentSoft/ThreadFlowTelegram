@@ -11,7 +11,7 @@ use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramSetWebhookCommand extends Command
 {
-    protected $signature = 'thread-flow:telegram:webhook-set {channel=telegram}';
+    protected $signature = 'threadflow:telegram-webhook-set {--channel=telegram}';
 
     protected $description = 'Sets webhook for Telegram bot';
 
@@ -38,8 +38,12 @@ class TelegramSetWebhookCommand extends Command
     {
         $this->output->title('ThreadFlow Telegram Webhook Set');
 
-        $channelName = $this->argument('channel');
+        $channelName = $this->option('channel');
         $config = $threadFlowTelegram->getTelegramChannelConfig($channelName);
+
+
+
+
         $token = $config->get('api_token');
         $webhookUrl = $config->get('webhook_url');
         $webhookIpAddress = $config->get('webhook_ip_address');

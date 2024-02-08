@@ -10,7 +10,7 @@ use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramDeleteWebhookCommand extends Command
 {
-    protected $signature = 'thread-flow:telegram:webhook-delete {channel=telegram}';
+    protected $signature = 'threadflow:telegram-webhook-remove {--channel=telegram}';
 
     protected $description = 'Deletes webhook for Telegram bot';
 
@@ -23,7 +23,7 @@ class TelegramDeleteWebhookCommand extends Command
     {
         $this->output->title('ThreadFlow Telegram Webhook Delete');
 
-        $channelName = $this->argument('channel');
+        $channelName = $this->option('channel');
         $config = $threadFlowTelegram->getTelegramChannelConfig($channelName);
         $token = $config->get('api_token');
 
