@@ -6,7 +6,7 @@ use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInte
 use SequentSoft\ThreadFlow\Messages\Outgoing\Service\OutgoingServiceMessage;
 use SequentSoft\ThreadFlowTelegram\Enums\Messages\EmojiReaction;
 
-class TelegramMessageReactionCommonOutgoingServiceMessage extends OutgoingServiceMessage implements CommonOutgoingMessageInterface
+class TelegramMessageReactionOutgoingServiceMessage extends OutgoingServiceMessage implements CommonOutgoingMessageInterface
 {
     protected bool $isBig = false;
 

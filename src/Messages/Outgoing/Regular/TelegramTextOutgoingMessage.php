@@ -8,7 +8,7 @@ class TelegramTextOutgoingMessage extends TextOutgoingMessage
 {
     protected ?string $parseMode = null;
 
-    public static function make(string $text, $keyboard = null): TelegramTextOutgoingMessage
+    public static function make(string|array $text, $keyboard = null): TelegramTextOutgoingMessage
     {
         return new static($text, $keyboard);
     }
