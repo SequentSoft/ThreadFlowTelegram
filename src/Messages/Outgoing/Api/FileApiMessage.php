@@ -2,20 +2,20 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\FileOutgoingRegularMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\FileOutgoingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
 
 class FileApiMessage extends BaseApiMessage
 {
-    public static function canCreateFromMessage(OutgoingMessageInterface $outgoingMessage): bool
+    public static function canCreateFromMessage(CommonOutgoingMessageInterface $outgoingMessage): bool
     {
-        return $outgoingMessage instanceof FileOutgoingRegularMessageInterface;
+        return $outgoingMessage instanceof FileOutgoingMessageInterface;
     }
 
-    protected function send(HttpClientInterface $client, OutgoingMessageInterface $outgoingMessage, array $data): array
+    protected function send(HttpClientInterface $client, CommonOutgoingMessageInterface $outgoingMessage, array $data): array
     {
-        /** @var FileOutgoingRegularMessageInterface $outgoingMessage */
+        /** @var FileOutgoingMessageInterface $outgoingMessage */
 
         // local file
         if ($outgoingMessage->getPath() !== null) {

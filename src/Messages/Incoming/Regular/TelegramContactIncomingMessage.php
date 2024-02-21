@@ -3,12 +3,12 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ContactIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ContactIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 
-class TelegramContactIncomingRegularMessage extends ContactIncomingRegularMessage implements
+class TelegramContactIncomingMessage extends ContactIncomingMessage implements
     CanCreateFromDataMessageInterface
 {
     use CreatesMessageContextFromDataTrait;
@@ -20,7 +20,7 @@ class TelegramContactIncomingRegularMessage extends ContactIncomingRegularMessag
 
     public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
-        $message = new static(
+        return new static(
             id: $data['message']['message_id'],
             context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
@@ -29,9 +29,5 @@ class TelegramContactIncomingRegularMessage extends ContactIncomingRegularMessag
             lastName: $data['message']['contact']['last_name'] ?? '',
             userId: $data['message']['contact']['user_id'] ?? '',
         );
-
-        $message->setRaw($data);
-
-        return $message;
     }
 }

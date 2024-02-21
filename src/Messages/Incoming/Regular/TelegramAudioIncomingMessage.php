@@ -3,14 +3,14 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\AudioIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\AudioIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
-class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage implements
+class TelegramAudioIncomingMessage extends AudioIncomingMessage implements
     CanCreateFromDataMessageInterface,
     InteractsWithHttpInterface
 {
@@ -45,8 +45,6 @@ class TelegramAudioIncomingRegularMessage extends AudioIncomingRegularMessage im
         $message->setFileSize($file['file_size'] ?? null);
         $message->setMimetype($file['mime_type'] ?? null);
         $message->setDuration($file['duration'] ?? null);
-
-        $message->setRaw($data);
 
         return $message;
     }

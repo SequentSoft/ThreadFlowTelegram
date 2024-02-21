@@ -2,20 +2,20 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingRegularMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\ForwardOutgoingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
 
 class ForwardApiMessage extends BaseApiMessage
 {
-    public static function canCreateFromMessage(OutgoingMessageInterface $outgoingMessage): bool
+    public static function canCreateFromMessage(CommonOutgoingMessageInterface $outgoingMessage): bool
     {
-        return $outgoingMessage instanceof ForwardOutgoingRegularMessageInterface;
+        return $outgoingMessage instanceof ForwardOutgoingMessageInterface;
     }
 
-    protected function send(HttpClientInterface $client, OutgoingMessageInterface $outgoingMessage, array $data): array
+    protected function send(HttpClientInterface $client, CommonOutgoingMessageInterface $outgoingMessage, array $data): array
     {
-        /** @var ForwardOutgoingRegularMessageInterface $outgoingMessage */
+        /** @var ForwardOutgoingMessageInterface $outgoingMessage */
         return $client->postJson(
             'forwardMessage',
             array_merge($data, [

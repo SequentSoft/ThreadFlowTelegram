@@ -6,7 +6,7 @@ use DateTimeImmutable;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 
-class TelegramInlineButtonCallbackIncomingRegularMessage extends TelegramTextIncomingRegularMessage
+class TelegramInlineButtonCallbackIncomingMessage extends TelegramTextIncomingMessage
 {
     use CreatesMessageContextFromDataTrait;
 
@@ -34,8 +34,7 @@ class TelegramInlineButtonCallbackIncomingRegularMessage extends TelegramTextInc
             text: $data['callback_query']['data'],
         );
 
-        $message->setStateId($stateId);
-        $message->setRaw($data);
+        $message->setPageId($stateId);
 
         return $message;
     }

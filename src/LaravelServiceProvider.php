@@ -18,16 +18,16 @@ use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramSetWebhookCommand;
 use SequentSoft\ThreadFlowTelegram\Laravel\Controllers\WebhookHandleController;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramLongPollingCommand;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\IncomingMessagesFactory;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramAudioIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramContactIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramFileIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramImageIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramInlineButtonCallbackIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramLocationIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramStickerIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramUnknownIncomingRegularMessage;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramVideoIncomingRegularMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramAudioIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramContactIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramFileIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramImageIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramInlineButtonCallbackIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramLocationIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramStickerIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramTextIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramUnknownIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramVideoIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\FileApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ForwardApiMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api\ImageApiMessage;
@@ -48,15 +48,15 @@ class LaravelServiceProvider extends ServiceProvider
     protected function getDefaultIncomingMessagesTypes(): array
     {
         return [
-            TelegramTextIncomingRegularMessage::class,
-            TelegramContactIncomingRegularMessage::class,
-            TelegramLocationIncomingRegularMessage::class,
-            TelegramImageIncomingRegularMessage::class,
-            TelegramFileIncomingRegularMessage::class,
-            TelegramStickerIncomingRegularMessage::class,
-            TelegramVideoIncomingRegularMessage::class,
-            TelegramAudioIncomingRegularMessage::class,
-            TelegramInlineButtonCallbackIncomingRegularMessage::class,
+            TelegramTextIncomingMessage::class,
+            TelegramContactIncomingMessage::class,
+            TelegramLocationIncomingMessage::class,
+            TelegramImageIncomingMessage::class,
+            TelegramFileIncomingMessage::class,
+            TelegramStickerIncomingMessage::class,
+            TelegramVideoIncomingMessage::class,
+            TelegramAudioIncomingMessage::class,
+            TelegramInlineButtonCallbackIncomingMessage::class,
         ];
     }
 
@@ -117,7 +117,7 @@ class LaravelServiceProvider extends ServiceProvider
             IncomingMessagesFactoryInterface::class,
             fn (IncomingMessagesFactory $factory) => $factory
                 ->addMessageTypeClass($this->getDefaultIncomingMessagesTypes())
-                ->registerFallbackMessage(TelegramUnknownIncomingRegularMessage::class)
+                ->registerFallbackMessage(TelegramUnknownIncomingMessage::class)
         );
 
         $this->app->afterResolving(

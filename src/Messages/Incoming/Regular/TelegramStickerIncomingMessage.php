@@ -3,14 +3,14 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\VideoIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\StickerIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
-class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage implements
+class TelegramStickerIncomingMessage extends StickerIncomingMessage implements
     CanCreateFromDataMessageInterface,
     InteractsWithHttpInterface
 {
@@ -20,37 +20,29 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
     protected ?string $fileId = null;
     protected ?string $fileUniqueId = null;
     protected ?int $fileSize = null;
-    protected ?string $mimetype = null;
-    protected ?int $duration = null;
 
     public static function canCreateFromData(array $data): bool
     {
-        return isset($data['message']['video'])
-            || isset($data['message']['video_note'])
-            || isset($data['message']['animation']);
+        return isset($data['message']['sticker']);
     }
 
     public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
-        $file = $data['message']['video']
-            ?? $data['message']['video_note']
-            ?? $data['message']['animation'];
-
         $message = new static(
             id: $data['message']['message_id'],
             context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
-            name: $file['file_name'] ?? null,
+            name: $data['message']['sticker']['emoji'] ?? null,
+            stickerId: null,
+            emoji: $data['message']['sticker']['emoji'] ?? null,
         );
+
+        $file = $data['message']['sticker'];
 
         $message->setFileId($file['file_id']);
         $message->setFileUniqueId($file['file_unique_id']);
         $message->setFileSize($file['file_size'] ?? null);
-        $message->setMimetype($file['mime_type'] ?? null);
-        $message->setDuration($file['duration'] ?? null);
-
-        $message->setRaw($data);
 
         return $message;
     }
@@ -85,28 +77,6 @@ class TelegramVideoIncomingRegularMessage extends VideoIncomingRegularMessage im
     public function setFileSize(int $fileSize): self
     {
         $this->fileSize = $fileSize;
-        return $this;
-    }
-
-    public function getMimetype(): ?string
-    {
-        return $this->mimetype;
-    }
-
-    public function setMimetype(string $mimetype): self
-    {
-        $this->mimetype = $mimetype;
-        return $this;
-    }
-
-    public function getDuration(): ?int
-    {
-        return $this->duration;
-    }
-
-    public function setDuration(int $duration): self
-    {
-        $this->duration = $duration;
         return $this;
     }
 

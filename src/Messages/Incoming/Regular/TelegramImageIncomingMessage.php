@@ -3,14 +3,14 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\StickerIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\ImageIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
-class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessage implements
+class TelegramImageIncomingMessage extends ImageIncomingMessage implements
     CanCreateFromDataMessageInterface,
     InteractsWithHttpInterface
 {
@@ -20,10 +20,12 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
     protected ?string $fileId = null;
     protected ?string $fileUniqueId = null;
     protected ?int $fileSize = null;
+    protected ?int $width = null;
+    protected ?int $height = null;
 
     public static function canCreateFromData(array $data): bool
     {
-        return isset($data['message']['sticker']);
+        return isset($data['message']['photo']);
     }
 
     public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
@@ -33,18 +35,16 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
             context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
             url: null,
-            name: $data['message']['sticker']['emoji'] ?? null,
-            stickerId: null,
-            emoji: $data['message']['sticker']['emoji'] ?? null,
+            name: null,
         );
 
-        $file = $data['message']['sticker'];
+        $lastImage = $data['message']['photo'][count($data['message']['photo']) - 1];
 
-        $message->setFileId($file['file_id']);
-        $message->setFileUniqueId($file['file_unique_id']);
-        $message->setFileSize($file['file_size'] ?? null);
-
-        $message->setRaw($data);
+        $message->setFileId($lastImage['file_id']);
+        $message->setFileUniqueId($lastImage['file_unique_id']);
+        $message->setFileSize($lastImage['file_size'] ?? null);
+        $message->setWidth($lastImage['width']);
+        $message->setHeight($lastImage['height']);
 
         return $message;
     }
@@ -79,6 +79,28 @@ class TelegramStickerIncomingRegularMessage extends StickerIncomingRegularMessag
     public function setFileSize(int $fileSize): self
     {
         $this->fileSize = $fileSize;
+        return $this;
+    }
+
+    public function getWidth(): ?int
+    {
+        return $this->width;
+    }
+
+    public function setWidth(int $width): self
+    {
+        $this->width = $width;
+        return $this;
+    }
+
+    public function getHeight(): ?int
+    {
+        return $this->height;
+    }
+
+    public function setHeight(int $height): self
+    {
+        $this->height = $height;
         return $this;
     }
 

@@ -3,14 +3,14 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\FileIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\GetFileTrait;
 
-class TelegramFileIncomingRegularMessage extends FileIncomingRegularMessage implements
+class TelegramFileIncomingMessage extends FileIncomingMessage implements
     CanCreateFromDataMessageInterface,
     InteractsWithHttpInterface
 {
@@ -88,8 +88,6 @@ class TelegramFileIncomingRegularMessage extends FileIncomingRegularMessage impl
         $message->setFileUniqueId($document['file_unique_id']);
         $message->setFileSize($document['file_size'] ?? null);
         $message->setMimetype($document['mime_type'] ?? null);
-
-        $message->setRaw($data);
 
         return $message;
     }

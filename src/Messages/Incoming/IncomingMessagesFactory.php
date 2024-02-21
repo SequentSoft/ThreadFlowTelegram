@@ -4,10 +4,10 @@ namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming;
 
 use InvalidArgumentException;
 use JsonException;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\CommonIncomingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
-use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Service\TelegramBotStartedIncomingServiceMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Service\TelegramBotStartedIncomingMessage;
 
 class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
 {
@@ -58,11 +58,11 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
     /**
      * @throws JsonException
      */
-    public function make(string $channelName, array $data): IncomingMessageInterface
+    public function make(string $channelName, array $data): CommonIncomingMessageInterface
     {
         // handle "/start" command
-        if (TelegramBotStartedIncomingServiceMessage::canCreateFromData($data)) {
-            return TelegramBotStartedIncomingServiceMessage::createFromData($this, $channelName, $data);
+        if (TelegramBotStartedIncomingMessage::canCreateFromData($data)) {
+            return TelegramBotStartedIncomingMessage::createFromData($this, $channelName, $data);
         }
 
         foreach ($this->messageTypes as $messageClass) {

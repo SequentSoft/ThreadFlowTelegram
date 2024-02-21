@@ -2,7 +2,7 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 
 interface OutgoingApiMessageFactoryInterface
@@ -12,5 +12,5 @@ interface OutgoingApiMessageFactoryInterface
      */
     public function addApiMessageTypeClass(string|array $apiMessageClass): self;
 
-    public function make(OutgoingMessageInterface $message, ?PageInterface $contextPage = null): ApiMessageInterface;
+    public function make(CommonOutgoingMessageInterface $message, ?PageInterface $contextPage = null): ApiMessageInterface;
 }

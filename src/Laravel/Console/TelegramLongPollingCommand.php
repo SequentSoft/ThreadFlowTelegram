@@ -85,7 +85,7 @@ class TelegramLongPollingCommand extends Command
                         '<info>→ In:</info>',
                         "{$classNamePath}\\\033[33m{$classNameLatestPart}\033[0m",
                         ($from ? "#FROM:{$from}" : ''),
-                        ($message->getStateId() ? "#SID:" . $message->getStateId() : ''),
+                        ($message->getPageId() ? "#SID:" . $message->getPageId() : ''),
                     ])
                 )
             );

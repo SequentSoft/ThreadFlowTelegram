@@ -9,19 +9,22 @@ use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
 use SequentSoft\ThreadFlow\Contracts\DataFetchers\DataFetcherInterface;
 use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
 use SequentSoft\ThreadFlow\Contracts\Events\EventBusInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\IncomingMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\IncomingRegularMessageInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\CommonIncomingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\Regular\IncomingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\WithKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionInterface;
 use SequentSoft\ThreadFlow\Contracts\Session\SessionStoreInterface;
+use SequentSoft\ThreadFlow\Keyboard\Buttons\TextButton;
 use SequentSoft\ThreadFlow\Keyboard\InlineKeyboard;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\InteractsWithHttpInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\OutgoingApiMessageFactoryInterface;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramClickedIncomingMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramInlineButtonCallbackIncomingMessage;
 
 class TelegramChannel extends Channel
 {
@@ -49,7 +52,7 @@ class TelegramChannel extends Channel
         return $this->config->get('api_token');
     }
 
-    protected function testInputText(string $text, MessageContextInterface $context): IncomingMessageInterface
+    protected function testInputText(string $text, MessageContextInterface $context): CommonIncomingMessageInterface
     {
         return $this->messagesFactory->make($this->channelName, [
             'message' => [
@@ -67,10 +70,9 @@ class TelegramChannel extends Channel
         ]);
     }
 
-    protected function dispatch(IncomingMessageInterface $message, SessionInterface $session): void
+    protected function dispatch(CommonIncomingMessageInterface $message, SessionInterface $session): void
     {
-        $this->preprocess($message, $session);
-        parent::dispatch($message, $session);
+        parent::dispatch($this->preprocess($message, $session), $session);
     }
 
     public function listen(DataFetcherInterface $fetcher): void
@@ -95,16 +97,44 @@ class TelegramChannel extends Channel
     }
 
     protected function preprocess(
-        IncomingMessageInterface $message,
+        CommonIncomingMessageInterface $message,
         SessionInterface $session,
-    ): IncomingMessageInterface {
-        if ($message instanceof IncomingRegularMessageInterface) {
-            $map = $session->get('$telegramKeyboardMap', []);
+    ): CommonIncomingMessageInterface {
+        if ($message instanceof TelegramInlineButtonCallbackIncomingMessage) {
+            $clickMessage = new TelegramClickedIncomingMessage(
+                id: $message->getId(),
+                context: $message->getContext(),
+                timestamp: $message->getTimestamp(),
+                button: new TextButton(
+                    title: $message->getText(),
+                    callbackData: $message->getText(),
+                ),
+            );
+
+            $clickMessage->setPageId($message->getPageId());
+
+            return $clickMessage;
+        }
+
+        if ($message instanceof IncomingMessageInterface) {
+            $map = $session->getServiceData()->get('KeyboardMap', []);
 
             $text = $message->getText();
 
             if ($text && isset($map[$text])) {
-                $message->setText($map[$text]);
+                $button = unserialize($map[$text]);
+
+                if ($button->isAnswerAsText()) {
+                    $message->setText($button->getCallbackData());
+                    return $message;
+                }
+
+                return new TelegramClickedIncomingMessage(
+                    id: $message->getId(),
+                    context: $message->getContext(),
+                    timestamp: $message->getTimestamp(),
+                    button: $button,
+                );
             }
         }
 
@@ -112,10 +142,10 @@ class TelegramChannel extends Channel
     }
 
     protected function storeKeyboardMapToSession(
-        OutgoingMessageInterface $message,
-        SessionInterface $session
+        CommonOutgoingMessageInterface $message,
+        SessionInterface               $session
     ): void {
-        $session->delete('$telegramKeyboardMap');
+        $session->getServiceData()->delete('KeyboardMap');
 
         if (! $message instanceof WithKeyboardInterface) {
             return;
@@ -135,18 +165,18 @@ class TelegramChannel extends Channel
 
         foreach ($keyboard->getRows() as $row) {
             foreach ($row->getButtons() as $button) {
-                $keyboardMap[$button->getText()] = $button->getCallbackData() ?? '';
+                $keyboardMap[$button->getTitle()] = serialize($button);
             }
         }
 
-        $session->set('$telegramKeyboardMap', $keyboardMap);
+        $session->getServiceData()->set('KeyboardMap', $keyboardMap);
     }
 
     protected function outgoing(
-        OutgoingMessageInterface $message,
-        ?SessionInterface $session,
-        ?PageInterface $contextPage
-    ): OutgoingMessageInterface {
+        CommonOutgoingMessageInterface $message,
+        ?SessionInterface              $session,
+        ?PageInterface                 $contextPage
+    ): CommonOutgoingMessageInterface {
 
         if ($session) {
             $this->storeKeyboardMapToSession($message, $session);

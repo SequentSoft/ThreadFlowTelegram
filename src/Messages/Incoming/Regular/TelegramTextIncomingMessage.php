@@ -3,33 +3,29 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
-use SequentSoft\ThreadFlow\Messages\Incoming\Regular\LocationIncomingRegularMessage;
+use SequentSoft\ThreadFlow\Messages\Incoming\Regular\TextIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
+use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\WithMessageReactions;
 
-class TelegramLocationIncomingRegularMessage extends LocationIncomingRegularMessage implements
-    CanCreateFromDataMessageInterface
+class TelegramTextIncomingMessage extends TextIncomingMessage implements CanCreateFromDataMessageInterface
 {
     use CreatesMessageContextFromDataTrait;
+    use WithMessageReactions;
 
     public static function canCreateFromData(array $data): bool
     {
-        return isset($data['message']['location']);
+        return isset($data['message']['text']);
     }
 
     public static function createFromData(IncomingMessagesFactoryInterface $factory, string $channelName, array $data): self
     {
-        $message = new static(
+        return new static(
             id: $data['message']['message_id'],
             context: static::createMessageContextFromData($channelName, $data, $factory),
             timestamp: DateTimeImmutable::createFromFormat('U', $data['message']['date']),
-            latitude: $data['message']['location']['latitude'],
-            longitude: $data['message']['location']['longitude'],
+            text: $data['message']['text'],
         );
-
-        $message->setRaw($data);
-
-        return $message;
     }
 }

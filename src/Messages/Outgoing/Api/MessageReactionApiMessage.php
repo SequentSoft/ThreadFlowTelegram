@@ -2,20 +2,20 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\OutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
-use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Service\TelegramMessageReactionOutgoingServiceMessage;
+use SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Service\TelegramMessageReactionCommonOutgoingServiceMessage;
 
 class MessageReactionApiMessage extends BaseApiMessage
 {
-    public static function canCreateFromMessage(OutgoingMessageInterface $outgoingMessage): bool
+    public static function canCreateFromMessage(CommonOutgoingMessageInterface $outgoingMessage): bool
     {
-        return $outgoingMessage instanceof TelegramMessageReactionOutgoingServiceMessage;
+        return $outgoingMessage instanceof TelegramMessageReactionCommonOutgoingServiceMessage;
     }
 
-    protected function send(HttpClientInterface $client, OutgoingMessageInterface $outgoingMessage, array $data): array
+    protected function send(HttpClientInterface $client, CommonOutgoingMessageInterface $outgoingMessage, array $data): array
     {
-        /** @var TelegramMessageReactionOutgoingServiceMessage $outgoingMessage */
+        /** @var TelegramMessageReactionCommonOutgoingServiceMessage $outgoingMessage */
 
         $client->postJson(
             'setMessageReaction',
