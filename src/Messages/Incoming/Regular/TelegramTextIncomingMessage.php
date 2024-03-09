@@ -3,13 +3,14 @@
 namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular;
 
 use DateTimeImmutable;
+use SequentSoft\ThreadFlow\Contracts\Messages\CanReceiveReactionInterface;
 use SequentSoft\ThreadFlow\Messages\Incoming\Regular\TextIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\CreatesMessageContextFromDataTrait;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Traits\WithMessageReactions;
 
-class TelegramTextIncomingMessage extends TextIncomingMessage implements CanCreateFromDataMessageInterface
+class TelegramTextIncomingMessage extends TextIncomingMessage implements CanCreateFromDataMessageInterface, CanReceiveReactionInterface
 {
     use CreatesMessageContextFromDataTrait;
     use WithMessageReactions;
