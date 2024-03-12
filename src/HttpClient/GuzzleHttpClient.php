@@ -22,6 +22,11 @@ class GuzzleHttpClient implements HttpClientInterface
         return "https://api.telegram.org/bot{$token}/";
     }
 
+    public function getBaseFileDownloadUri(string $token): string
+    {
+        return "https://api.telegram.org/file/bot{$token}/";
+    }
+
     public function postJson(string $endpoint, array $payload): ResponseInterface
     {
         $response = $this->client->post($endpoint, [

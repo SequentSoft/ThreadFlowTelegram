@@ -41,7 +41,10 @@ trait GetFileTrait
     {
         $data = $this->getTelegramFileData($fileId);
 
-        $baseUri = trim($this->httpClientFactory->create($this->botToken)->getBaseUri($this->botToken), '/') . '/';
+        $baseUri = trim(
+            $this->httpClientFactory->create($this->botToken)->getBaseFileDownloadUri($this->botToken),
+            '/'
+        ) . '/';
 
         return $baseUri . $data['file_path'];
     }
