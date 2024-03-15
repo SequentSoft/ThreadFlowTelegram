@@ -19,6 +19,10 @@ class FileApiMessage extends BaseApiMessage
 
         // local file
         if ($outgoingMessage->getPath() !== null) {
+            if (! empty($data['reply_markup'])) {
+                $data['reply_markup'] = json_encode($data['reply_markup']);
+            }
+
             return $client->postMultipart('sendDocument', [
                 ['name' => 'chat_id', 'contents' => $data['chat_id']],
                 ['name' => 'document', 'contents' => fopen($outgoingMessage->getPath(), 'rb')],
