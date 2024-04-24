@@ -2,7 +2,7 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Api;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\BasicOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\HtmlOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\MarkdownOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\Regular\TextOutgoingMessageInterface;
@@ -10,14 +10,14 @@ use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientInterface;
 
 class TextApiMessage extends BaseApiMessage
 {
-    public static function canCreateFromMessage(CommonOutgoingMessageInterface $outgoingMessage): bool
+    public static function canCreateFromMessage(BasicOutgoingMessageInterface $outgoingMessage): bool
     {
         return $outgoingMessage instanceof TextOutgoingMessageInterface
             || $outgoingMessage instanceof HtmlOutgoingMessageInterface
             || $outgoingMessage instanceof MarkdownOutgoingMessageInterface;
     }
 
-    protected function send(HttpClientInterface $client, CommonOutgoingMessageInterface $outgoingMessage, array $data): array
+    protected function send(HttpClientInterface $client, BasicOutgoingMessageInterface $outgoingMessage, array $data): array
     {
         if ($outgoingMessage instanceof HtmlOutgoingMessageInterface) {
             return $client->postJson(

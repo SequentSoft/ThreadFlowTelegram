@@ -1,14 +1,9 @@
 parameters:
-    level: 1
+    level: 5
     paths:
         - src
 
     reportUnmatchedIgnoredErrors: true
 
     excludePaths:
-        - src/Laravel/Console/TelegramLongPollingCommand.php
-        - src/LaravelServiceProvider.php
-        - src/Laravel/Console/TelegramDeleteWebhookCommand.php
-        - src/Laravel/Console/TelegramGetWebhookInfoCommand.php
-        - src/Laravel/Console/TelegramSetWebhookCommand.php
-        - src/Laravel/Controllers/WebhookHandleController.php
+        - src/Laravel

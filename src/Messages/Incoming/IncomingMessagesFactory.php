@@ -4,7 +4,7 @@ namespace SequentSoft\ThreadFlowTelegram\Messages\Incoming;
 
 use InvalidArgumentException;
 use JsonException;
-use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\CommonIncomingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Incoming\BasicIncomingMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\CanCreateFromDataMessageInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Service\TelegramBotStartedIncomingMessage;
@@ -22,6 +22,7 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
             foreach ($messageClass as $item) {
                 $this->addMessageTypeClass($item);
             }
+
             return $this;
         }
 
@@ -34,7 +35,6 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
 
     /**
      * @param class-string<CanCreateFromDataMessageInterface> $messageClass
-     * @return void
      */
     public function registerFallbackMessage(string $messageClass): void
     {
@@ -44,11 +44,10 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
 
     /**
      * @param class-string<CanCreateFromDataMessageInterface> $messageClass
-     * @return void
      */
     protected function validateMessageClass(string $messageClass): void
     {
-        if (!is_subclass_of($messageClass, CanCreateFromDataMessageInterface::class)) {
+        if (! is_subclass_of($messageClass, CanCreateFromDataMessageInterface::class)) {
             throw new InvalidArgumentException(
                 sprintf('Message class %s must implement %s', $messageClass, CanCreateFromDataMessageInterface::class)
             );
@@ -58,7 +57,7 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
     /**
      * @throws JsonException
      */
-    public function make(string $channelName, array $data): CommonIncomingMessageInterface
+    public function make(string $channelName, array $data): BasicIncomingMessageInterface
     {
         // handle "/start" command
         if (TelegramBotStartedIncomingMessage::canCreateFromData($data)) {
@@ -74,6 +73,7 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
         if ($this->fallbackMessageClass) {
             /** @var class-string<CanCreateFromDataMessageInterface> $fallbackMessageClass */
             $fallbackMessageClass = $this->fallbackMessageClass;
+
             return $fallbackMessageClass::createFromData($this, $channelName, $data);
         }
 

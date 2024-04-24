@@ -100,7 +100,7 @@ class LongPollingDataFetcher implements DataFetcherInterface
                 JSON_THROW_ON_ERROR
             );
 
-            foreach ($parsedUpdates["result"] as $update) {
+            foreach ($parsedUpdates['result'] as $update) {
                 $handleUpdate($update);
                 $offset = $update['update_id'] + 1;
             }

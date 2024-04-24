@@ -5,7 +5,6 @@ namespace SequentSoft\ThreadFlowTelegram\Laravel\Console;
 use Illuminate\Console\Command;
 use JsonException;
 use SequentSoft\ThreadFlow\Exceptions\Channel\ChannelNotConfiguredException;
-use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class TelegramDeleteWebhookCommand extends Command
@@ -19,19 +18,15 @@ class TelegramDeleteWebhookCommand extends Command
      * @throws JsonException
      * @throws ChannelNotConfiguredException
      */
-    public function handle(ThreadFlowTelegram $threadFlowTelegram, HttpClientFactoryInterface $httpClientFactory): void
+    public function handle(ThreadFlowTelegram $telegramChannelManager): void
     {
         $this->output->title('ThreadFlow Telegram Webhook Delete');
 
-        $channelName = $this->option('channel');
-        $config = $threadFlowTelegram->getTelegramChannelConfig($channelName);
-        $token = $config->get('api_token');
+        $channel = $telegramChannelManager->channel($this->option('channel'));
 
-        $parsedData = $httpClientFactory->create($token)
-            ->postJson('deleteWebhook', [])
-            ->getParsedData();
-
-        $this->line(json_encode($parsedData, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+        $this->line(
+            json_encode($channel->deleteWebhook(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT)
+        );
 
         $this->output->success('Successfully deleted webhook');
     }

@@ -12,7 +12,6 @@ trait CreatesRoomFromDataTrait
 
         return $room
             ->setName($data['message']['chat']['title'] ?? '')
-            ->setType($data['message']['chat']['type'])
-        ;
+            ->setType($data['message']['chat']['type']);
     }
 }

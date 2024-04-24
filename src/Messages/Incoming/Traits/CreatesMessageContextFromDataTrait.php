@@ -20,12 +20,6 @@ trait CreatesMessageContextFromDataTrait
             $channelName,
             static::createParticipantFromData($data),
             static::createRoomFromData($data),
-            static::createForwardParticipantFromData($data),
-            isset($data['message']['reply_to_message']['message_id'])
-                ? $factory->make($channelName, [
-                    'message' => $data['message']['reply_to_message'],
-                ])
-                : null,
         );
     }
 }

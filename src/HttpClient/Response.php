@@ -2,6 +2,7 @@
 
 namespace SequentSoft\ThreadFlowTelegram\HttpClient;
 
+use JsonException;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\ResponseInterface;
 
 class Response implements ResponseInterface
@@ -17,6 +18,9 @@ class Response implements ResponseInterface
         return $this->rawData;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function getParsedData(): array
     {
         return json_decode(
@@ -27,6 +31,9 @@ class Response implements ResponseInterface
         );
     }
 
+    /**
+     * @throws JsonException
+     */
     public function getParsedDataResult(): mixed
     {
         return $this->getParsedData()['result'] ?? [];

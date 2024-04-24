@@ -6,18 +6,23 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
+use SequentSoft\ThreadFlow\DataFetchers\InvokableDataFetcher;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class WebhookHandleController
 {
+    public function __invoke(Request $request, ThreadFlowTelegram $threadFlowTelegram): JsonResponse
+    {
+        return $this->handle($request, $threadFlowTelegram);
+    }
+
     public function handle(Request $request, ThreadFlowTelegram $threadFlowTelegram): JsonResponse
     {
         $secretToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
-        $channel = $request->get('channel');
 
         try {
-            $config = $threadFlowTelegram->getTelegramChannelConfig($channel);
-            $configuredSecretToken = $config->get('webhook_secret_token');
+            $channel = $threadFlowTelegram->channel($request->get('channel'));
+            $configuredSecretToken = $channel->getConfig()->get('webhook_secret_token');
 
             if ($configuredSecretToken && $configuredSecretToken !== $secretToken) {
                 throw new RuntimeException('Invalid secret token');
@@ -29,7 +34,9 @@ class WebhookHandleController
             ]);
         }
 
-        $threadFlowTelegram->handleData($channel, $request->all());
+        $invokableDataFetcher = new InvokableDataFetcher();
+        $channel->listen($invokableDataFetcher);
+        $invokableDataFetcher($request->all());
 
         return response()->json([
             'status' => 'handled',

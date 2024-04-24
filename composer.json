@@ -19,6 +19,7 @@
     "require": {
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.3",
+        "nunomaduro/termwind": "^1.13|^2.0",
         "sequentsoft/threadflow": "dev-master"
     },
     "require-dev": {

@@ -7,8 +7,8 @@ use SequentSoft\ThreadFlow\Contracts\Keyboard\Buttons\BackButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\Buttons\ContactButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\Buttons\LocationButtonInterface;
 use SequentSoft\ThreadFlow\Contracts\Keyboard\Buttons\TextButtonInterface;
-use SequentSoft\ThreadFlow\Contracts\Keyboard\CommonKeyboardInterface;
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Keyboard\SimpleKeyboardInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\BasicOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\WithKeyboardInterface;
 use SequentSoft\ThreadFlow\Contracts\Page\PageInterface;
 use SequentSoft\ThreadFlow\Keyboard\InlineKeyboard;
@@ -18,8 +18,8 @@ use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\ApiMessageInterfa
 abstract class BaseApiMessage implements ApiMessageInterface
 {
     final public function __construct(
-        protected CommonOutgoingMessageInterface $outgoingMessage,
-        protected ?PageInterface                 $contextPage = null
+        protected BasicOutgoingMessageInterface $outgoingMessage,
+        protected ?PageInterface $contextPage = null
     ) {
         if (! $outgoingMessage->getContext()) {
             throw new \InvalidArgumentException('Message context is required');
@@ -27,8 +27,8 @@ abstract class BaseApiMessage implements ApiMessageInterface
     }
 
     public static function createFromMessage(
-        CommonOutgoingMessageInterface $outgoingMessage,
-        ?PageInterface                 $contextPage = null
+        BasicOutgoingMessageInterface $outgoingMessage,
+        ?PageInterface $contextPage = null
     ): static {
         return new static($outgoingMessage, $contextPage);
     }
@@ -44,11 +44,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
                 'text' => $button->getTitle(),
                 'request_location' => true,
             ],
-            $button instanceof TextButtonInterface => [
-                'text' => $button->getTitle(),
-                'callback_data' => "{$stateId}:" . $button->getCallbackData() ?? '',
-            ],
-            $button instanceof BackButtonInterface => [
+            $button instanceof TextButtonInterface, $button instanceof BackButtonInterface => [
                 'text' => $button->getTitle(),
                 'callback_data' => "{$stateId}:" . $button->getCallbackData() ?? '',
             ],
@@ -70,11 +66,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
                 'text' => $button->getTitle(),
                 'request_location' => true,
             ],
-            $button instanceof TextButtonInterface => [
-                'text' => $button->getTitle(),
-                'callback_data' => $button->getCallbackData() ?? '',
-            ],
-            $button instanceof BackButtonInterface => [
+            $button instanceof TextButtonInterface, $button instanceof BackButtonInterface => [
                 'text' => $button->getTitle(),
                 'callback_data' => $button->getCallbackData() ?? '',
             ],
@@ -86,8 +78,8 @@ abstract class BaseApiMessage implements ApiMessageInterface
     }
 
     protected function makeReplyMarkup(
-        CommonOutgoingMessageInterface $message,
-        ?PageInterface                 $contextPage
+        BasicOutgoingMessageInterface $message,
+        ?PageInterface $contextPage
     ): ?array {
         $replyMarkup = [];
 
@@ -103,8 +95,8 @@ abstract class BaseApiMessage implements ApiMessageInterface
     }
 
     protected function makeMessageKeyboardPayload(
-        CommonOutgoingMessageInterface $message,
-        ?PageInterface                 $contextPage
+        BasicOutgoingMessageInterface $message,
+        ?PageInterface $contextPage
     ): ?array {
         if (! $message instanceof WithKeyboardInterface) {
             return null;
@@ -138,7 +130,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
             }, $row->getButtons());
         }
 
-        if ($keyboard instanceof CommonKeyboardInterface) {
+        if ($keyboard instanceof SimpleKeyboardInterface) {
             return [
                 'keyboard' => $result,
                 'input_field_placeholder' => $keyboard->getPlaceholder(),
@@ -170,10 +162,10 @@ abstract class BaseApiMessage implements ApiMessageInterface
     }
 
     abstract protected function send(
-        HttpClientInterface            $client,
-        CommonOutgoingMessageInterface $outgoingMessage,
-        array                          $data,
+        HttpClientInterface $client,
+        BasicOutgoingMessageInterface $outgoingMessage,
+        array $data,
     ): array;
 
-    abstract public static function canCreateFromMessage(CommonOutgoingMessageInterface $outgoingMessage): bool;
+    abstract public static function canCreateFromMessage(BasicOutgoingMessageInterface $outgoingMessage): bool;
 }

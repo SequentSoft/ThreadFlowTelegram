@@ -14,7 +14,6 @@ trait CreatesParticipantFromDataTrait
             ->setFirstName($data['message']['from']['first_name'] ?? '')
             ->setLastName($data['message']['from']['last_name'] ?? '')
             ->setUsername($data['message']['from']['username'] ?? '')
-            ->setLanguage($data['message']['from']['language_code'] ?? '')
-        ;
+            ->setLanguage($data['message']['from']['language_code'] ?? '');
     }
 }

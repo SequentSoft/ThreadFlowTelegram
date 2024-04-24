@@ -2,11 +2,11 @@
 
 namespace SequentSoft\ThreadFlowTelegram\Messages\Outgoing\Service;
 
-use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\CommonOutgoingMessageInterface;
+use SequentSoft\ThreadFlow\Contracts\Messages\Outgoing\BasicOutgoingMessageInterface;
 use SequentSoft\ThreadFlow\Messages\Outgoing\Service\OutgoingServiceMessage;
 use SequentSoft\ThreadFlowTelegram\Enums\Messages\EmojiReaction;
 
-class TelegramMessageReactionOutgoingServiceMessage extends OutgoingServiceMessage implements CommonOutgoingMessageInterface
+class TelegramMessageReactionOutgoingServiceMessage extends OutgoingServiceMessage implements BasicOutgoingMessageInterface
 {
     protected bool $isBig = false;
 

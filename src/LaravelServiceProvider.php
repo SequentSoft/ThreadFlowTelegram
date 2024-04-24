@@ -4,19 +4,14 @@ namespace SequentSoft\ThreadFlowTelegram;
 
 use Illuminate\Support\ServiceProvider;
 use SequentSoft\ThreadFlow\Contracts\Channel\ChannelManagerInterface;
-use SequentSoft\ThreadFlow\Contracts\Config\ConfigInterface;
-use SequentSoft\ThreadFlow\Contracts\Dispatcher\DispatcherFactoryInterface;
-use SequentSoft\ThreadFlow\Contracts\Events\EventBusInterface;
-use SequentSoft\ThreadFlow\Contracts\Session\SessionStoreInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\HttpClient\HttpClientFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Incoming\IncomingMessagesFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\Contracts\Messages\Outgoing\OutgoingApiMessageFactoryInterface;
 use SequentSoft\ThreadFlowTelegram\HttpClient\GuzzleHttpClientFactory;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramDeleteWebhookCommand;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramGetWebhookInfoCommand;
-use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramSetWebhookCommand;
-use SequentSoft\ThreadFlowTelegram\Laravel\Controllers\WebhookHandleController;
 use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramLongPollingCommand;
+use SequentSoft\ThreadFlowTelegram\Laravel\Console\TelegramSetWebhookCommand;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\IncomingMessagesFactory;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramAudioIncomingMessage;
 use SequentSoft\ThreadFlowTelegram\Messages\Incoming\Regular\TelegramContactIncomingMessage;
@@ -43,6 +38,8 @@ class LaravelServiceProvider extends ServiceProvider
         $this->app->singleton(IncomingMessagesFactoryInterface::class, IncomingMessagesFactory::class);
         $this->app->singleton(OutgoingApiMessageFactoryInterface::class, OutgoingApiMessageFactory::class);
         $this->app->singleton(HttpClientFactoryInterface::class, GuzzleHttpClientFactory::class);
+
+        $this->loadViewsFrom(__DIR__ . '/Laravel/views', 'threadflow-telegram');
     }
 
     protected function getDefaultIncomingMessagesTypes(): array
@@ -72,44 +69,13 @@ class LaravelServiceProvider extends ServiceProvider
         ];
     }
 
-    protected function bootWebhookRoutes(): void
-    {
-        foreach ($this->app->get('config')->get('thread-flow.channels', []) as $channelData) {
-            $driver = $channelData['driver'] ?? null;
-            $webhookUrl = ltrim(parse_url($channelData['webhook_url'] ?? '', PHP_URL_PATH), '/');
-            $apiToken = $channelData['api_token'] ?? null;
-
-            if ($driver === 'telegram' && $webhookUrl && $apiToken) {
-                $this->app->get('router')->post(
-                    $webhookUrl,
-                    [WebhookHandleController::class, 'handle']
-                );
-            }
-        }
-    }
-
     public function boot(): void
     {
         $this->app->afterResolving(
             ChannelManagerInterface::class,
             fn (ChannelManagerInterface $channelManager) => $channelManager->registerChannelDriver(
                 'telegram',
-                fn (
-                    string $channelName,
-                    ConfigInterface $config,
-                    SessionStoreInterface $sessionStore,
-                    DispatcherFactoryInterface $dispatcherFactory,
-                    EventBusInterface $eventBus
-                ) => new TelegramChannel(
-                    $channelName,
-                    $config,
-                    $sessionStore,
-                    $dispatcherFactory,
-                    $eventBus,
-                    $this->app->make(HttpClientFactoryInterface::class),
-                    $this->app->make(IncomingMessagesFactoryInterface::class),
-                    $this->app->make(OutgoingApiMessageFactoryInterface::class),
-                )
+                fn (...$dependencies) => $this->app->make(TelegramChannel::class, $dependencies)
             )
         );
 
@@ -134,7 +100,5 @@ class LaravelServiceProvider extends ServiceProvider
                 TelegramDeleteWebhookCommand::class,
             ]);
         }
-
-        $this->bootWebhookRoutes();
     }
 }

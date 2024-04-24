@@ -1,0 +1,3 @@
+<div>
+    [Date: {{ $date }}]
+</div>
