@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
-use SequentSoft\ThreadFlow\DataFetchers\InvokableDataFetcher;
+use SequentSoft\ThreadFlowTelegram\DataFetchers\InvokableDataFetcher;
 use SequentSoft\ThreadFlowTelegram\ThreadFlowTelegram;
 
 class WebhookHandleController
