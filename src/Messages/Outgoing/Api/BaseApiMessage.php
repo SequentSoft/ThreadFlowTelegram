@@ -46,11 +46,11 @@ abstract class BaseApiMessage implements ApiMessageInterface
             ],
             $button instanceof TextButtonInterface, $button instanceof BackButtonInterface => [
                 'text' => $button->getTitle(),
-                'callback_data' => "{$stateId}:" . $button->getCallbackData() ?? '',
+                'callback_data' => "{$stateId}:" . ($button->getCallbackData() ?? ''),
             ],
             default => [
                 'text' => $button->getTitle(),
-                'callback_data' => "{$stateId}:" . $button->getTitle() ?? '',
+                'callback_data' => "{$stateId}:" . $button->getTitle(),
             ]
         };
     }
@@ -72,7 +72,7 @@ abstract class BaseApiMessage implements ApiMessageInterface
             ],
             default => [
                 'text' => $button->getTitle(),
-                'callback_data' => $button->getTitle() ?? '',
+                'callback_data' => $button->getTitle(),
             ]
         };
     }

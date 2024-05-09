@@ -78,10 +78,11 @@ class LongPollingDataFetcher implements DataFetcherInterface
         return '';
     }
 
-    public function fetch(Closure $handleUpdate): void
+    public function fetch(Closure $handleUpdate): never
     {
         $offset = 0;
 
+        // @phpstan-ignore-next-line
         while (true) {
             $updates = $this->fetchUpdates(
                 $offset,

@@ -74,7 +74,19 @@ class IncomingMessagesFactory implements IncomingMessagesFactoryInterface
             /** @var class-string<CanCreateFromDataMessageInterface> $fallbackMessageClass */
             $fallbackMessageClass = $this->fallbackMessageClass;
 
-            return $fallbackMessageClass::createFromData($this, $channelName, $data);
+            $message = $fallbackMessageClass::createFromData($this, $channelName, $data);
+
+            if ($message instanceof BasicIncomingMessageInterface) {
+                return $message;
+            }
+
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Fallback message class %s must implement %s',
+                    $fallbackMessageClass,
+                    BasicIncomingMessageInterface::class
+                )
+            );
         }
 
         throw new InvalidArgumentException(
